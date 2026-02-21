@@ -1,41 +1,78 @@
 # Jesus Ariel Santos 24-EISN-2-034
 
+#Empece mi codigo importando la libreria pygame que me permite crear ventanas, dibujar objetos, detectar teclado y hacer el juego
 import pygame
-import sys
 
+# importe el modulo SYS que me permite usar funciones del sistema como (EXIT) que sirve para cerrar el programa completamente 
+import sys 
+#aqui cree la instruccion para poder llamar la clase jugador desde el archivo jugador.py
+from scripts.jugador import Jugador
+
+#Cree esta funcion que contiene todo el juego 
 def iniciar_juego():
 
-    # Iniciar pygame
+    # Aquí iniciamos todos los modulos de pygame correctamente sin esto no funciona el teclado no funciona la ventana, no funcionaria nada
     pygame.init()
 
-    # Tamaño de ventana
-    Ancho = 1000
-    Alto = 700
+    # Utilice pygame.display.Info() para obtener el tamaño real de la pantalla
+    info = pygame.display.Info()
+    Ancho = info.current_w
+    Alto = info.current_h
 
-    pantalla = pygame.display.set_mode((Ancho, Alto))
+    # Cree la pantalla en modo RESIZABLE que permite que pueda cambiar el tamaño de la pantalla como minimizar, maximizar y cerrar  
+    pantalla = pygame.display.set_mode((Ancho, Alto), pygame.RESIZABLE)
+
+    #Esto permite colocar el nombre del juego arriba en la ventana 
     pygame.display.set_caption("Mision Roja")
 
-    # tiempo para los FPS
+
+    # Aqui cree un objeto de la clase jugador, este sera el personaje que se mueve en la pantalla
+    jugador_principal = Jugador(200, 200)
+
+    # cree un reloj para contolar la velocidad del juego
     tiempo = pygame.time.Clock()
 
-    # Variable de control
+    # Cree una Variable de control del juego es la que mantiene el juego activo
     corriendo = True
 
-    # Bucle principal
+    # Este es el Bucle principal se ejecuta constantemente, si se detiene se cierra el juego
     while corriendo:
 
-        tiempo.tick(60)
-
+        # Detectar eventos como el teclas mouse y cerrar la ventana 
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 corriendo = False
 
-        # Fondo rojo oscuro
+                #Aqui se detecta cuando se presiona la tecla escape para salir del juego
+
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    corriendo = False
+
+        #Aqui se Detecta las teclas presionadas y despues se la pasa al jugador 
+        teclas = pygame.key.get_pressed()
+
+
+        # Esto permite que el jugador se mueva 
+        jugador_principal.mover(teclas)
+
+        # Este es el fondo
         pantalla.fill((60, 0, 0))
 
+        # aqui se llama al metodo Dibujar de la clase jugador para mostrarlo en pantalla 
+        jugador_principal.dibujar(pantalla)
+
+        # Actualiza la pantalla
         pygame.display.flip()
 
+        # Controla los FPS 
+        tiempo.tick(60)
+
+        #cierra pygame correctamente 
+
     pygame.quit()
+    
+    #Esto termina el programa 
     sys.exit()
 
 
