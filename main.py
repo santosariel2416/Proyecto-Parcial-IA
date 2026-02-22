@@ -79,7 +79,7 @@ def iniciar_juego():
             bala.mover()
 
             for vigilante in vigilantes:
-                vigilante.mover()
+                vigilante.mover(jugador_principal)
 
         # Eliminar balas que salen de la pantalla
         balas = [b for b in balas if b.rect.y > 0]
