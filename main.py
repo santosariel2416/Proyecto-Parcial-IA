@@ -9,6 +9,8 @@ import sys
 from scripts.jugador import Jugador
 #Aqui se define la clase bala 
 from scripts.bala import Bala
+
+from scripts.vigilante import Vigilante
 #Cree esta funcion que contiene todo el juego 
 def iniciar_juego():
 
@@ -28,6 +30,12 @@ def iniciar_juego():
 
     # Aqui cree un objeto de la clase jugador, este sera el personaje que se mueve en la pantalla
     jugador_principal = Jugador(200, 200)
+
+    vigilantes = []
+
+    for i in range(3):
+        enemigo = Vigilante(200 * i + 100, 50)
+    vigilantes.append(enemigo) 
 
     # cree un reloj para contolar la velocidad del juego
     tiempo = pygame.time.Clock()
@@ -70,6 +78,9 @@ def iniciar_juego():
         for bala in balas:
             bala.mover()
 
+            for vigilante in vigilantes:
+                vigilante.mover()
+
         # Eliminar balas que salen de la pantalla
         balas = [b for b in balas if b.rect.y > 0]
 
@@ -78,6 +89,9 @@ def iniciar_juego():
 
         # aqui se llama al metodo Dibujar de la clase jugador para mostrarlo en pantalla 
         jugador_principal.dibujar(pantalla)
+
+        for vigilante in vigilantes:
+            vigilante.dibujar(pantalla)
 
         # Dibujar balas
         for bala in balas:
