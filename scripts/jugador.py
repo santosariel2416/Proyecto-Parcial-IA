@@ -21,22 +21,40 @@ class Jugador:
         self.color = (200, 30, 30)
 
     def mover(self, teclas_presionadas):
+
         # Movimiento horizontal
         if teclas_presionadas[pygame.K_LEFT]:
             self.rect.x -= self.velocidad
+
         if teclas_presionadas[pygame.K_RIGHT]:
             self.rect.x += self.velocidad
 
         # Movimiento vertical
         if teclas_presionadas[pygame.K_UP]:
             self.rect.y -= self.velocidad
+
         if teclas_presionadas[pygame.K_DOWN]:
             self.rect.y += self.velocidad
+
+        # Limites de pantalla
+        pantalla = pygame.display.get_surface()
+
+        if self.rect.left < 0:
+            self.rect.left = 0
+
+        if self.rect.right > pantalla.get_width():
+            self.rect.right = pantalla.get_width()
+
+        if self.rect.top < 0:
+            self.rect.top = 0
+
+        if self.rect.bottom > pantalla.get_height():
+            self.rect.bottom = pantalla.get_height()
 
     def dibujar(self, superficie):
         # Dibujo un rectángulo que representa al jugador
         pygame.draw.rect(
             superficie,
             self.color,
-            self.rectS
+            self.rect
         )
