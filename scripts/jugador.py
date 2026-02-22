@@ -6,7 +6,7 @@ import pygame
 class Jugador:
     def __init__(self, posicion_x, posicion_y):
         # Aquí guardo la posición inicial donde aparece el jugador
-        # En lugar de usar solo x e y, ahora usamos un rectángulo
+        # En lugar de usar solo x e y, ahora usare un rectángulo
         # porque nos permitirá detectar colisiones más adelante
         self.ancho = 50
         self.alto = 50
