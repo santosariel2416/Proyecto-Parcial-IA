@@ -38,5 +38,5 @@ class Jugador:
         pygame.draw.rect(
             superficie,
             self.color,
-            self.rect
+            self.rectS
         )
