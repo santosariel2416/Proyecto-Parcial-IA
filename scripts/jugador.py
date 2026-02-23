@@ -20,6 +20,9 @@ class Jugador:
         # Color del jugador (rojo un poco más claro que el fondo)
         self.color = (200, 30, 30)
 
+        #vidas del jugador 
+        self.vidas = 3 
+
         #Este método sirve para mover al jugador según las teclas que esté presionando.
     def mover(self, teclas_presionadas):
 
