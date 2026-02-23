@@ -1,7 +1,7 @@
 # Proyecto-parcial-IA
 
-## Nombre
+## Nombre Jesus Ariel Santos 
 
-## Matrícula
+## Matrícula 24-EISN-2-034
 
-## Proyecto
+## Proyecto MISION ROJA
