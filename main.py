@@ -6,6 +6,7 @@ import pygame
 
 # importe el modulo SYS que me permite usar funciones del sistema como (EXIT) que sirve para cerrar el programa completamente 
 import sys 
+import random
 
 #aqui cree la instruccion para poder llamar la clase jugador desde el archivo jugador.py
 from scripts.jugador import Jugador
@@ -34,16 +35,16 @@ def iniciar_juego():
 
     # Aqui cree un objeto de la clase jugador, este sera el personaje que se mueve en la pantalla
     jugador_principal = Jugador(200, 200)
+
     #Aqui cree una lista vacia que guardara todo los objetos tipo vigilantes
-    vigilantes = [] 
+    vigilantes = []
+
+    # Lista que almacenará los tiempos en que cada vigilante debe reaparecer
+    vigilantes_muertos = []
 
     for i in range(3):#Esto es para que el ciclo se ejecute 3 veces
         enemigo = Vigilante(200 * i + 100, 50)
         vigilantes.append(enemigo)
-
-    
-    # Esta variable guarda el tiempo en que debe reaparecer un nuevo vigilante
-    tiempo_reaparicion = 0
 
     # cree un reloj para contolar la velocidad del juego
     tiempo = pygame.time.Clock()
@@ -103,14 +104,21 @@ def iniciar_juego():
 
                         #  Se Guarda el tiempo en que murio el vigilante
                         # y sumamos 2000 milisegundos (2 segundos)
-                        tiempo_reaparicion = tiempo_actual + 2000
+                        vigilantes_muertos.append(tiempo_actual + 2000)
                     break
 
-        #  SISTEMA DE REAPARICION
-        # Si no hay vigilantes y el tiempo ya paso, se crea uno nuevo
-        if len(vigilantes) == 0 and tiempo_actual > tiempo_reaparicion:#Aqui se detecta cuando se cumple el temporizador
-            nuevo_vigilante = Vigilante(200, 50)
-            vigilantes.append(nuevo_vigilante)#Aqui se crea un nuevo vigilante
+        # SISTEMA DE REAPARICION INDIVIDUAL
+        for tiempo_muerte in vigilantes_muertos[:]:
+            if tiempo_actual > tiempo_muerte:
+
+                # Crear nuevo vigilante en posición aleatoria en la parte superior
+                nuevo_vigilante = Vigilante(
+                    random.randint(0, pantalla.get_width() - 50),
+                    50
+                )
+
+                vigilantes.append(nuevo_vigilante)
+                vigilantes_muertos.remove(tiempo_muerte)
 
         # Eliminar balas que salen de la pantalla
         balas = [b for b in balas if b.rect.y > 0]
