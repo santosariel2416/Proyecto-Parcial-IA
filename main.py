@@ -87,6 +87,14 @@ def iniciar_juego():
 
         for vigilante in vigilantes:
             vigilante.mover(jugador_principal)
+        # Aqui detecto si un vigilante choca con el jugador.
+        # Si ocurre la colision, le resto una vida al jugador,
+        # elimino el enemigo y activo el temporizador para que reaparezca despues de 2 segundos.
+            for vigilante in vigilantes[:]:
+             if vigilante.rect.colliderect(jugador_principal.rect):
+                jugador_principal.vidas -= 1
+                vigilantes.remove(vigilante)
+             tiempo_reaparicion = tiempo_actual + 2000
 
         # Mover balas
         for bala in balas:
