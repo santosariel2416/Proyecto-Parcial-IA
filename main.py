@@ -16,6 +16,9 @@ from scripts.bala import Bala
 
 from scripts.vigilante import Vigilante
 
+#Importar dinero
+from scripts.dinero import Dinero
+
 #Cree esta funcion que contiene todo el juego 
 def iniciar_juego():
 
@@ -35,6 +38,11 @@ def iniciar_juego():
 
     # Aqui cree un objeto de la clase jugador, este sera el personaje que se mueve en la pantalla
     jugador_principal = Jugador(200, 200)
+
+    #qui cree el objeto dinero
+    dinero = Dinero(Ancho, Alto)
+    dinero_recolectado = 0 #Esta es la variable que lleva el conteo del dinero recolectado por el jugador 
+
 
     #Aqui cree una lista vacia que guardara todo los objetos tipo vigilantes
     vigilantes = []
@@ -84,6 +92,25 @@ def iniciar_juego():
                     )
                     balas.append(nueva_bala)
 
+                #aqui se reinicia el juego cuando se preciona la tecla R si esta en game over
+                if evento.key == pygame.K_r and game_over:
+
+                    jugador_principal.vidas = 3
+                    jugador_principal.rect.x = 200
+                    jugador_principal.rect.y = 200
+
+                    vigilantes.clear()
+                    vigilantes_muertos.clear()
+                    balas.clear()
+
+                    for i in range(3):
+                        enemigo = Vigilante(200 * i + 100, 50)
+                        vigilantes.append(enemigo)
+
+                    score = 0 
+                    game_over = False
+
+
         if not game_over:
 
             #Aqui se Detecta las teclas presionadas y despues se la pasa al jugador 
@@ -91,6 +118,11 @@ def iniciar_juego():
 
             # Esto permite que el jugador se mueva 
             jugador_principal.mover(teclas)
+
+            #Detectar colision del jugador con el dinero 
+            if jugador_principal.rect.colliderect(dinero.rect):
+                dinero_recolectado += 1 #aumenta el conteo de dinero recolectado
+                dinero.reaparecer(pantalla.get_width(), pantalla.get_height()) #Hace que el dinero reaparezca en una nueva posicion aleatoria 
 
             for vigilante in vigilantes:
                 vigilante.mover(jugador_principal)
@@ -153,6 +185,9 @@ def iniciar_juego():
         # aqui se llama al metodo Dibujar de la clase jugador para mostrarlo en pantalla 
         jugador_principal.dibujar(pantalla)
 
+        #dibujar dinero 
+        dinero.dibujar(pantalla)
+
         for vigilante in vigilantes:
             vigilante.dibujar(pantalla)
 
@@ -169,11 +204,21 @@ def iniciar_juego():
         texto_score = fuente.render(f"Puntos: {score}", True, (255, 255, 255))
         pantalla.blit(texto_score, (20, 60))
 
+        #mostrar dinero en la pantalla
+        texto_dinero = fuente.render(f"Dinero: {dinero_recolectado}", True, (0, 255, 0))
+        pantalla.blit(texto_dinero, (20, 100))
+
+
+
         # Mostrar pantalla de Game Over
         if game_over:
             fuente_grande = pygame.font.SysFont(None, 80)
             texto_game_over = fuente_grande.render("GAME OVER", True, (255, 0, 0))
             pantalla.blit(texto_game_over, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 - 50))
+
+            fuente_pequena = pygame.font.SysFont(None, 40)
+            texto_reiniciar = fuente_pequena.render("Presiona R para reiniciar", True, (255, 255, 255))
+            pantalla.blit(texto_reiniciar, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 + 20))
 
         # Actualiza la pantalla
         pygame.display.flip()
@@ -189,4 +234,4 @@ def iniciar_juego():
 
 
 if __name__ == "__main__":
-    iniciar_juego()
+    iniciar_juego()  

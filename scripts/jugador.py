@@ -65,7 +65,6 @@ class Jugador:
         #Esto reduce una vida cuando el jugador es golpeado
         self.vidas -= 1 
 
-        def esta_vivo(self): 
-            #Esto devuelve true si el jugador tiene vidas restantes, de lo contrario devuelve false
-            return self.vidas > 0  
-        
+    def esta_vivo(self): 
+        #Esto devuelve true si el jugador tiene vidas restantes, de lo contrario devuelve false
+        return self.vidas > 0
