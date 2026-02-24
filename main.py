@@ -52,6 +52,10 @@ def iniciar_juego():
     # Cree una Variable de control del juego es la que mantiene el juego activo
     corriendo = True
 
+    game_over = False #Esta funcion controla si el juego termino
+
+    score = 0 #Este es el sistema de puntos 
+
     balas = []
 
     # Este es el Bucle principal se ejecuta constantemente, si se detiene se cierra el juego
@@ -73,67 +77,72 @@ def iniciar_juego():
                     corriendo = False
 
                 #Aqui se crea la bala desde el centro del jugador
-                if evento.key == pygame.K_SPACE:
+                if evento.key == pygame.K_SPACE and not game_over:
                     nueva_bala = Bala(
                         jugador_principal.rect.centerx - 4,
                         jugador_principal.rect.top
                     )
                     balas.append(nueva_bala)
 
-        #Aqui se Detecta las teclas presionadas y despues se la pasa al jugador 
-        teclas = pygame.key.get_pressed()
+        if not game_over:
 
-        # Esto permite que el jugador se mueva 
-        jugador_principal.mover(teclas)
+            #Aqui se Detecta las teclas presionadas y despues se la pasa al jugador 
+            teclas = pygame.key.get_pressed()
 
-        for vigilante in vigilantes:
-            vigilante.mover(jugador_principal)
+            # Esto permite que el jugador se mueva 
+            jugador_principal.mover(teclas)
 
-        # Mover balas
-        for bala in balas:
-            bala.mover()
+            for vigilante in vigilantes:
+                vigilante.mover(jugador_principal)
 
-        #  AQUI VA LA COLISION
-        for bala in balas[:]:
-            for vigilante in vigilantes[:]:# Esto lo que hace es copiarla lista para evitar errores al eliminar
-                if bala.rect.colliderect(vigilante.rect):# Esto detecta si la bala golpeo al enemigo
-                    if bala in balas:
-                        balas.remove(bala) #Esta parte elimina la bala de la lista
-                    if vigilante in vigilantes:
-                        vigilantes.remove(vigilante)#Elimina al vigilante
+            # Mover balas
+            for bala in balas:
+                bala.mover()
 
-                        #  Se Guarda el tiempo en que murio el vigilante
-                        # y sumamos 2000 milisegundos (2 segundos)
-                        vigilantes_muertos.append(tiempo_actual + 2000)
-                    break
+            #  AQUI VA LA COLISION
+            for bala in balas[:]:
+                for vigilante in vigilantes[:]:# Esto lo que hace es copiarla lista para evitar errores al eliminar
+                    if bala.rect.colliderect(vigilante.rect):# Esto detecta si la bala golpeo al enemigo
+                        if bala in balas:
+                            balas.remove(bala) #Esta parte elimina la bala de la lista
+                        if vigilante in vigilantes:
+                            vigilantes.remove(vigilante)#Elimina al vigilante
 
-        # SISTEMA DE REAPARICION INDIVIDUAL
-        for tiempo_muerte in vigilantes_muertos[:]:
-            if tiempo_actual > tiempo_muerte:
+                            score += 10 #Este es el sistema de puntos 
 
-                # Aqui Cree nuevo vigilante en posición aleatoria en la parte superior
-                nuevo_vigilante = Vigilante(
-                    random.randint(0, pantalla.get_width() - 50),
-                    50
-                )
+                            #  Se Guarda el tiempo en que murio el vigilante
+                            # y sumamos 2000 milisegundos (2 segundos)
+                            vigilantes_muertos.append(tiempo_actual + 2000)
+                        break
 
-                vigilantes.append(nuevo_vigilante)
-                vigilantes_muertos.remove(tiempo_muerte)
+            # SISTEMA DE REAPARICION INDIVIDUAL
+            for tiempo_muerte in vigilantes_muertos[:]:
+                if tiempo_actual > tiempo_muerte:
 
-                for vigilante in vigilantes[:]:
-                    if vigilante.rect.colliderect(jugador_principal.rect):
+                    # Aqui Cree nuevo vigilante en posición aleatoria en la parte superior
+                    nuevo_vigilante = Vigilante(
+                        random.randint(0, pantalla.get_width() - 50),
+                        50
+                    )
 
-                        vigilantes.remove(vigilante)
+                    vigilantes.append(nuevo_vigilante)
+                    vigilantes_muertos.remove(tiempo_muerte)
 
-                        # El jugador recibe daño al ser golpeado por un vigilante 
-                        jugador_principal.recibir_danio()
+            # COLISION VIGILANTE CONTRA JUGADOR
+            for vigilante in vigilantes[:]:
+                if vigilante.rect.colliderect(jugador_principal.rect):
 
-                        #Aqui se guarda el tiempo en que el vigilante debe reaparecer 
-                        vigilantes_muertos.append(tiempo_actual + 2000)
+                    vigilantes.remove(vigilante)
 
-                         # GAME OVER, Aquí verificamos si el jugador todavía está vivo, Si no tiene vidas, el juego se detiene
-                        if not jugador_principal.esta_vivo():
-                                 corriendo = False
+                    # El jugador recibe daño al ser golpeado por un vigilante 
+                    jugador_principal.recibir_danio()
+
+                    #Aqui se guarda el tiempo en que el vigilante debe reaparecer 
+                    vigilantes_muertos.append(tiempo_actual + 2000)
+
+                    # GAME OVER, Aquí verificamos si el jugador todavía está vivo, Si no tiene vidas, el juego se detiene
+                    if not jugador_principal.esta_vivo():
+                        game_over = True
 
         # Eliminar balas que salen de la pantalla
         balas = [b for b in balas if b.rect.y > 0]
@@ -150,6 +159,21 @@ def iniciar_juego():
         # Dibujar balas
         for bala in balas:
             bala.dibujar(pantalla)
+
+        # Mostrar sistema de vidas en pantalla
+        fuente = pygame.font.SysFont(None, 40)
+        texto_vidas = fuente.render(f"Vidas: {jugador_principal.vidas}", True, (255, 255, 255))
+        pantalla.blit(texto_vidas, (20, 20))
+
+        # Mostrar sistema de puntos
+        texto_score = fuente.render(f"Puntos: {score}", True, (255, 255, 255))
+        pantalla.blit(texto_score, (20, 60))
+
+        # Mostrar pantalla de Game Over
+        if game_over:
+            fuente_grande = pygame.font.SysFont(None, 80)
+            texto_game_over = fuente_grande.render("GAME OVER", True, (255, 0, 0))
+            pantalla.blit(texto_game_over, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 - 50))
 
         # Actualiza la pantalla
         pygame.display.flip()
