@@ -19,6 +19,8 @@ class Jugador:
         
         # Color del jugador (rojo un poco más claro que el fondo)
         self.color = (200, 30, 30)
+        #Este es el sistema de vidas del jugador 
+        self.vidas = 3 
 
     def mover(self, teclas_presionadas):
 
@@ -58,3 +60,12 @@ class Jugador:
             self.color,
             self.rect
         )
+
+    def recibir_danio(self): 
+        #Esto reduce una vida cuando el jugador es golpeado
+        self.vidas -= 1 
+
+        def esta_vivo(self): 
+            #Esto devuelve true si el jugador tiene vidas restantes, de lo contrario devuelve false
+            return self.vidas > 0  
+        

@@ -57,7 +57,7 @@ def iniciar_juego():
     # Este es el Bucle principal se ejecuta constantemente, si se detiene se cierra el juego
     while corriendo:
 
-        # Guardamos el tiempo actual del juego en milisegundos
+        # Guarde el tiempo actual del juego en milisegundos
         tiempo_actual = pygame.time.get_ticks()
 
         # Detectar eventos como el teclas mouse y cerrar la ventana 
@@ -111,7 +111,7 @@ def iniciar_juego():
         for tiempo_muerte in vigilantes_muertos[:]:
             if tiempo_actual > tiempo_muerte:
 
-                # Crear nuevo vigilante en posición aleatoria en la parte superior
+                # Aqui Cree nuevo vigilante en posición aleatoria en la parte superior
                 nuevo_vigilante = Vigilante(
                     random.randint(0, pantalla.get_width() - 50),
                     50
@@ -119,6 +119,21 @@ def iniciar_juego():
 
                 vigilantes.append(nuevo_vigilante)
                 vigilantes_muertos.remove(tiempo_muerte)
+
+                for vigilante in vigilantes[:]:
+                    if vigilante.rect.colliderect(jugador_principal.rect):
+
+                        vigilantes.remove(vigilante)
+
+                        # El jugador recibe daño al ser golpeado por un vigilante 
+                        jugador_principal.recibir_danio()
+
+                        #Aqui se guarda el tiempo en que el vigilante debe reaparecer 
+                        vigilantes_muertos.append(tiempo_actual + 2000)
+
+                         # GAME OVER, Aquí verificamos si el jugador todavía está vivo, Si no tiene vidas, el juego se detiene
+                        if not jugador_principal.esta_vivo():
+                                 corriendo = False
 
         # Eliminar balas que salen de la pantalla
         balas = [b for b in balas if b.rect.y > 0]
