@@ -21,23 +21,25 @@ from scripts.dinero import Dinero
 
 from scripts.puerta import Puerta # importe la clase puerta para colocarlo en la esquina inferior derecha de la pantalla
 
+from scripts.mapa_banco import MapaBanco #importe la clase mapa banco para crear el mapa del banco con paredes y pasillos tipo laberinto 
+
 
 # Menu principal del juego
 def menu_principal():
 
-    pygame.init()
+    pygame.init() #inicie todos los modulos de pygame correctamente sin esto no funciona nada 
 
-    info = pygame.display.Info()
+    info = pygame.display.Info()# utilice pygame.display.Info() para obtener el tamaño real de la pantalla
     Ancho = info.current_w
     Alto = info.current_h
 
-    pantalla = pygame.display.set_mode((Ancho, Alto))
+    pantalla = pygame.display.set_mode((Ancho, Alto))#Cree la pantalla usando el ancho y alto de la pantalla obtenida con pygame.display.Info()
     pygame.display.set_caption("Mision Roja")
 
-    reloj = pygame.time.Clock()
+    reloj = pygame.time.Clock() #cree un reloj para controlar la velocidad del menu y que no consuma muchos recursos de la computadora 
     en_menu = True
 
-    while en_menu:
+    while en_menu: #Este es el bucle del menu principal que se ejecuta constantemente hasta que se presiona la tecla Enter para iniciar el juego o Esc para salir completamente del programa
 
         pantalla.fill((30, 0, 0))
 
@@ -52,7 +54,7 @@ def menu_principal():
         texto_salir = fuente_opcion.render("Presiona ESC para salir", True, (200, 200, 200))
         pantalla.blit(texto_salir, (Ancho//2 - 220, Alto//2 + 60))
 
-        for evento in pygame.event.get():
+        for evento in pygame.event.get(): #Este es el bucle de eventos que detecta las teclas presionadas por el usuario
 
             if evento.type == pygame.QUIT:
                 pygame.quit()
@@ -86,6 +88,8 @@ def iniciar_juego():
 
     # Cree la pantalla en modo RESIZABLE que permite que pueda cambiar el tamaño de la pantalla como minimizar, maximizar y cerrar  
     pantalla = pygame.display.set_mode((Ancho, Alto), pygame.RESIZABLE)
+
+    mapa = MapaBanco(Ancho, Alto) #aqui se crea el objeto mapa usando la clase mapabanco que se encarga de crear el mapa del banco con paredes y pasillos tipos laberintos, el mapa se centra en la pantalla usando el ancho y alto de la pantalla que se obtiene con pygame.display.Info() para que se adapte a cualquier tamaño de la pantalla
 
     #Esto permite colocar el nombre del juego arriba en la ventana 
     pygame.display.set_caption("Mision Roja")
@@ -165,7 +169,7 @@ def iniciar_juego():
                     victoria = False
                     dinero_recolectado = 0
 
-        if not game_over:
+        if not game_over: 
 
             teclas = pygame.key.get_pressed()
             jugador_principal.mover(teclas)
@@ -217,9 +221,11 @@ def iniciar_juego():
                     if not jugador_principal.esta_vivo():
                         game_over = True
 
-        balas = [b for b in balas if b.rect.y > 0]
+        balas = [b for b in balas if b.rect.y > 0] #aqui se eliminan las balas que salen de la pantalla 
 
         pantalla.fill((60, 0, 0))
+
+        mapa.dibujar(pantalla)
 
         jugador_principal.dibujar(pantalla)
         dinero.dibujar(pantalla)
