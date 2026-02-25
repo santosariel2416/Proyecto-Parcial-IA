@@ -14,10 +14,12 @@ from scripts.jugador import Jugador
 #Aqui se define la clase bala 
 from scripts.bala import Bala
 
-from scripts.vigilante import Vigilante
+from scripts.vigilante import Vigilante #aqui se importa la clase vigilante para crear los enemigos que persiguen al jugador 
 
 #Importar dinero
 from scripts.dinero import Dinero
+
+from scripts.puerta import Puerta # importe la clase puerta para colocarlo en la esquina inferior derecha de la pantalla
 
 #Cree esta funcion que contiene todo el juego 
 def iniciar_juego():
@@ -43,6 +45,10 @@ def iniciar_juego():
     dinero = Dinero(Ancho, Alto)
     dinero_recolectado = 0 #Esta es la variable que lleva el conteo del dinero recolectado por el jugador 
 
+    #cree el objeto puerta
+    puerta = Puerta(Ancho, Alto)
+    victoria = False #Esta variable contola si el jugador llego a la puerta para ganar el juego
+    dinero_necesario = 5 #Esta variable controla cuanto dinero necesita el jugador para ganar el juego
 
     #Aqui cree una lista vacia que guardara todo los objetos tipo vigilantes
     vigilantes = []
@@ -109,7 +115,8 @@ def iniciar_juego():
 
                     score = 0 
                     game_over = False
-
+                    victoria = False
+                    dinero_recolectado = 0
 
         if not game_over:
 
@@ -124,7 +131,13 @@ def iniciar_juego():
                 dinero_recolectado += 1 #aumenta el conteo de dinero recolectado
                 dinero.reaparecer(pantalla.get_width(), pantalla.get_height()) #Hace que el dinero reaparezca en una nueva posicion aleatoria 
 
-            for vigilante in vigilantes:
+            # colision con la puerta para ganar el juego, solo se puede ganar si el jugador tiene el dinero necesario
+            if jugador_principal.rect.colliderect(puerta.rect):# Esto detecta si el jugador llego a la puerta
+                if dinero_recolectado >= dinero_necesario: # Esto verifica si el jugador tiene el dinero necesario para ganar
+                    victoria = True
+                    game_over = True
+
+            for vigilante in vigilantes: #Esto hace que cada vigilante se mueva hacia el jugador, esto hace que el jugador tenga que esquivar a los vigilantes mientras recolecta el dinero y llegar a la puerta para ganar 
                 vigilante.mover(jugador_principal)
 
             # Mover balas
@@ -133,17 +146,15 @@ def iniciar_juego():
 
             #  AQUI VA LA COLISION
             for bala in balas[:]:
-                for vigilante in vigilantes[:]:# Esto lo que hace es copiarla lista para evitar errores al eliminar
-                    if bala.rect.colliderect(vigilante.rect):# Esto detecta si la bala golpeo al enemigo
+                for vigilante in vigilantes[:]:
+                    if bala.rect.colliderect(vigilante.rect):
                         if bala in balas:
-                            balas.remove(bala) #Esta parte elimina la bala de la lista
+                            balas.remove(bala)
                         if vigilante in vigilantes:
-                            vigilantes.remove(vigilante)#Elimina al vigilante
+                            vigilantes.remove(vigilante)
 
-                            score += 10 #Este es el sistema de puntos 
+                            score += 10 
 
-                            #  Se Guarda el tiempo en que murio el vigilante
-                            # y sumamos 2000 milisegundos (2 segundos)
                             vigilantes_muertos.append(tiempo_actual + 2000)
                         break
 
@@ -151,7 +162,6 @@ def iniciar_juego():
             for tiempo_muerte in vigilantes_muertos[:]:
                 if tiempo_actual > tiempo_muerte:
 
-                    # Aqui Cree nuevo vigilante en posición aleatoria en la parte superior
                     nuevo_vigilante = Vigilante(
                         random.randint(0, pantalla.get_width() - 50),
                         50
@@ -166,13 +176,10 @@ def iniciar_juego():
 
                     vigilantes.remove(vigilante)
 
-                    # El jugador recibe daño al ser golpeado por un vigilante 
                     jugador_principal.recibir_danio()
 
-                    #Aqui se guarda el tiempo en que el vigilante debe reaparecer 
                     vigilantes_muertos.append(tiempo_actual + 2000)
 
-                    # GAME OVER, Aquí verificamos si el jugador todavía está vivo, Si no tiene vidas, el juego se detiene
                     if not jugador_principal.esta_vivo():
                         game_over = True
 
@@ -187,6 +194,9 @@ def iniciar_juego():
 
         #dibujar dinero 
         dinero.dibujar(pantalla)
+
+        #dibujar puerta
+        puerta.dibujar(pantalla) 
 
         for vigilante in vigilantes:
             vigilante.dibujar(pantalla)
@@ -208,30 +218,26 @@ def iniciar_juego():
         texto_dinero = fuente.render(f"Dinero: {dinero_recolectado}", True, (0, 255, 0))
         pantalla.blit(texto_dinero, (20, 100))
 
-
-
-        # Mostrar pantalla de Game Over
+        # Mostrar pantalla de Game Over o Victoria
         if game_over:
             fuente_grande = pygame.font.SysFont(None, 80)
-            texto_game_over = fuente_grande.render("GAME OVER", True, (255, 0, 0))
-            pantalla.blit(texto_game_over, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 - 50))
+
+            if victoria:
+                texto_estado = fuente_grande.render("VICTORIA", True, (0, 255, 0))
+            else:
+                texto_estado = fuente_grande.render("GAME OVER", True, (255, 0, 0))
+
+            pantalla.blit(texto_estado, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 - 50))
 
             fuente_pequena = pygame.font.SysFont(None, 40)
             texto_reiniciar = fuente_pequena.render("Presiona R para reiniciar", True, (255, 255, 255))
             pantalla.blit(texto_reiniciar, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 + 20))
 
-        # Actualiza la pantalla
         pygame.display.flip()
-
-        # Controla los FPS 
         tiempo.tick(60)
 
-    #cierra pygame correctamente 
     pygame.quit()
-    
-    #Esto termina el programa 
     sys.exit()
 
-
 if __name__ == "__main__":
-    iniciar_juego()  
+    iniciar_juego() 
