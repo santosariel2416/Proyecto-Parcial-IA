@@ -4,15 +4,16 @@
 import pygame # Importe la libreria pygame para crear la ventana, dibujar objetos y manejar eventos 
 
 class Puerta:
-    def __init__(self, ancho_pantalla, alto_pantalla):# constructor de la clase puerta que recibe el ancho y alto de la pantalla para colocar la puerta en la esquina inferior derecha 
-        # Tamaño de la puerta es de 80x100 pixeles
-        self.ancho = 80 # ancho de la puerta 
-        self.alto = 100 # alto de la puerta
+    def __init__(self, mapa):# constructor de la clase puerta que ahora recibe el mapa para colocarse en la entrada del edificio
+        # Tamaño de la puerta es de 40x60 pixeles (ajustado para que encaje con el tamaño del banco)
+        self.ancho = 40 # ancho de la puerta 
+        self.alto = 60 # alto de la puerta
 
-        # La colocamos en la esquina inferior derecha
+        # La colocamos en el borde del banco para que sirva de entrada
+        # Se ubica en la parte izquierda central del rectángulo del banco
         self.rect = pygame.Rect( #cree un rectangulo para la puerta 
-            ancho_pantalla - self.ancho - 20, 
-            alto_pantalla - self.alto - 20,
+            mapa.rect.left - self.ancho // 2, 
+            mapa.rect.centery - self.alto // 2,
             self.ancho,
             self.alto
         )
