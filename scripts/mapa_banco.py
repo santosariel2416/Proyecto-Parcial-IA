@@ -39,7 +39,8 @@ class MapaBanco:
         self.paredes.append(pygame.Rect(self.rect.right - 10, self.rect.top, 10, self.rect.height))  # derecha
 
         # Parte inferior (dejamos espacio para la puerta)
-        self.paredes.append(pygame.Rect(self.rect.left, self.rect.bottom - 10, self.rect.width, 10))
+        self.paredes.append(pygame.Rect(self.rect.left, self.rect.bottom - 10, self.puerta.left - self.rect.left, 10))
+        self.paredes.append(pygame.Rect(self.puerta.right, self.rect.bottom - 10, self.rect.right - self.puerta.right, 10))
 
         # Pasillos internos tipo laberinto
         self.paredes.append(pygame.Rect(self.rect.left + 150, self.rect.top + 100, 500, 10))

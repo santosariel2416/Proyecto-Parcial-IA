@@ -113,8 +113,13 @@ def iniciar_juego():
     vigilantes_muertos = []
 
     for i in range(3):#Esto es para que el ciclo se ejecute 3 veces
-        enemigo = Vigilante(200 * i + 100, 50)
-        vigilantes.append(enemigo)
+        while True:
+            x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
+            y = random.randint(mapa.rect.top + 50, mapa.rect.bottom - 50)
+            enemigo = Vigilante(x, y)
+            if not mapa.colisiona_pared(enemigo.rect):
+                vigilantes.append(enemigo)
+                break
 
     # cree un reloj para contolar la velocidad del juego
     tiempo = pygame.time.Clock()
@@ -161,8 +166,13 @@ def iniciar_juego():
                     balas.clear()
 
                     for i in range(3):
-                        enemigo = Vigilante(200 * i + 100, 50)
-                        vigilantes.append(enemigo)
+                        while True:
+                            x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
+                            y = random.randint(mapa.rect.top + 50, mapa.rect.bottom - 50)
+                            enemigo = Vigilante(x, y)
+                            if not mapa.colisiona_pared(enemigo.rect):
+                                vigilantes.append(enemigo)
+                                break
 
                     score = 0 
                     game_over = False
@@ -172,7 +182,22 @@ def iniciar_juego():
         if not game_over: 
 
             teclas = pygame.key.get_pressed()
+
+            rect_original = jugador_principal.rect.copy()
+
             jugador_principal.mover(teclas)
+
+            if mapa.colisiona_pared(jugador_principal.rect):
+                jugador_principal.rect = rect_original
+
+            if jugador_principal.rect.left < 0:
+                jugador_principal.rect.left = 0
+            if jugador_principal.rect.right > pantalla.get_width():
+                jugador_principal.rect.right = pantalla.get_width()
+            if jugador_principal.rect.top < 0:
+                jugador_principal.rect.top = 0
+            if jugador_principal.rect.bottom > pantalla.get_height():
+                jugador_principal.rect.bottom = pantalla.get_height()
 
             if jugador_principal.rect.colliderect(dinero.rect):
                 dinero_recolectado += 1
@@ -184,7 +209,13 @@ def iniciar_juego():
                     game_over = True
 
             for vigilante in vigilantes:
+
+                posicion_original = vigilante.rect.copy()
+
                 vigilante.mover(jugador_principal)
+
+                if mapa.colisiona_pared(vigilante.rect):
+                    vigilante.rect = posicion_original
 
             for bala in balas:
                 bala.mover()
@@ -203,12 +234,14 @@ def iniciar_juego():
             for tiempo_muerte in vigilantes_muertos[:]:
                 if tiempo_actual > tiempo_muerte:
 
-                    nuevo_vigilante = Vigilante(
-                        random.randint(0, pantalla.get_width() - 50),
-                        50
-                    )
+                    while True:
+                        x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
+                        y = random.randint(mapa.rect.top + 50, mapa.rect.bottom - 50)
+                        nuevo_vigilante = Vigilante(x, y)
+                        if not mapa.colisiona_pared(nuevo_vigilante.rect):
+                            vigilantes.append(nuevo_vigilante)
+                            break
 
-                    vigilantes.append(nuevo_vigilante)
                     vigilantes_muertos.remove(tiempo_muerte)
 
             for vigilante in vigilantes[:]:
@@ -221,7 +254,7 @@ def iniciar_juego():
                     if not jugador_principal.esta_vivo():
                         game_over = True
 
-        balas = [b for b in balas if b.rect.y > 0] #aqui se eliminan las balas que salen de la pantalla 
+            balas = [b for b in balas if b.rect.y > 0] #aqui se eliminan las balas que salen de la pantalla 
 
         pantalla.fill((60, 0, 0))
 
@@ -248,6 +281,7 @@ def iniciar_juego():
         pantalla.blit(texto_dinero, (20, 100))
 
         if game_over:
+
             fuente_grande = pygame.font.SysFont(None, 80)
 
             if victoria:
