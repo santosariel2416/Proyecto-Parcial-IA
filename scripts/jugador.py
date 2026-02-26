@@ -8,8 +8,11 @@ class Jugador:
         # Aquí guardo la posición inicial donde aparece el jugador
         # En lugar de usar solo x e y, ahora usare un rectángulo
         # porque nos permitirá detectar colisiones más adelante
-        self.ancho = 50
-        self.alto = 50
+        
+        # He ajustado el ancho y alto a 30 para que el jugador quepa 
+        # cómodamente por los pasillos del banco que miden 50
+        self.ancho = 30
+        self.alto = 30
         
         # Creo el rectángulo del jugador con posición y tamaño
         self.rect = pygame.Rect(posicion_x, posicion_y, self.ancho, self.alto)
@@ -22,7 +25,7 @@ class Jugador:
         #Este es el sistema de vidas del jugador 
         self.vidas = 3 
 
-    def mover(self, teclas_presionadas):
+    def mover(self, teclas_presionadas):# Este metodo se encarga de mover al jugador segun las teclas que se presionen, recibe un diccionario con las teclas presionadas
 
         # Movimiento horizontal
         if teclas_presionadas[pygame.K_LEFT]:
