@@ -21,8 +21,7 @@ from scripts.dinero import Dinero
 
 from scripts.puerta import Puerta # importe la clase puerta para colocarlo en la esquina inferior derecha de la pantalla
 
-from scripts.mapa_banco import MapaBanco #importe la clase mapa banco para crear el mapa del banco con paredes y pasillos tipo laberinto 
-
+from scripts.mapa import MapaBanco 
 
 # Menu principal del juego
 def menu_principal():
@@ -41,7 +40,7 @@ def menu_principal():
 
     while en_menu: #Este es el bucle del menu principal que se ejecuta constantemente hasta que se presiona la tecla Enter para iniciar el juego o Esc para salir completamente del programa
 
-        pantalla.fill((30, 0, 0))
+        pantalla.fill((30, 0, 0))#Color del fondo del menu 
 
         fuente_titulo = pygame.font.SysFont(None, 100)
         texto_titulo = fuente_titulo.render("MISION ROJA", True, (255, 0, 0))
@@ -56,11 +55,11 @@ def menu_principal():
 
         for evento in pygame.event.get(): #Este es el bucle de eventos que detecta las teclas presionadas por el usuario
 
-            if evento.type == pygame.QUIT:
+            if evento.type == pygame.QUIT:#si el usuario cierra la ventana del menu, se cierra completamente el programa 
                 pygame.quit()
                 sys.exit()
 
-            if evento.type == pygame.KEYDOWN:
+            if evento.type == pygame.KEYDOWN: #si el usuario presiona una tecla, se verifica cual es la tecla presionada para tomar la accion correspondiente 
 
                 if evento.key == pygame.K_RETURN:
                     en_menu = False
@@ -71,7 +70,7 @@ def menu_principal():
                     sys.exit()
 
         pygame.display.flip()
-        reloj.tick(60)
+        reloj.tick(60) #Este es l contador de el reloj que controla la velocidad del menu,
 
 
 
@@ -94,15 +93,16 @@ def iniciar_juego():
     #Esto permite colocar el nombre del juego arriba en la ventana 
     pygame.display.set_caption("Mision Roja")
 
-    # Aqui cree un objeto de la clase jugador, este sera el personaje que se mueve en la pantalla
-    jugador_principal = Jugador(200, 200)
+    # El jugador empieza FUERA del banco (a la izquierda) 
+    jugador_principal = Jugador(mapa.rect.left - 100, mapa.rect.centery)
 
-    #qui cree el objeto dinero
-    dinero = Dinero(Ancho, Alto)
+    # El objeto dinero se crea pasando el objeto mapa para que aparezca dentro 
+    dinero = Dinero(mapa)
+    dinero.reaparecer(mapa)
     dinero_recolectado = 0 #Esta es la variable que lleva el conteo del dinero recolectado por el jugador 
 
-    #cree el objeto puerta
-    puerta = Puerta(Ancho, Alto)
+    # El objeto puerta se crea pasando el objeto mapa para ubicarse en la entrada 
+    puerta = Puerta(mapa)
     victoria = False #Esta variable contola si el jugador llego a la puerta para ganar el juego
     dinero_necesario = 5 #Esta variable controla cuanto dinero necesita el jugador para ganar el juego
 
@@ -113,13 +113,15 @@ def iniciar_juego():
     vigilantes_muertos = []
 
     for i in range(3):#Esto es para que el ciclo se ejecute 3 veces
-        while True:
+        intentos = 0 # Variable de seguridad para no quedar atrapado en el bucle
+        while intentos < 100:
             x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
             y = random.randint(mapa.rect.top + 50, mapa.rect.bottom - 50)
             enemigo = Vigilante(x, y)
             if not mapa.colisiona_pared(enemigo.rect):
                 vigilantes.append(enemigo)
                 break
+            intentos += 1
 
     # cree un reloj para contolar la velocidad del juego
     tiempo = pygame.time.Clock()
@@ -136,50 +138,53 @@ def iniciar_juego():
     # Este es el Bucle principal se ejecuta constantemente, si se detiene se cierra el juego
     while corriendo:
 
-        tiempo_actual = pygame.time.get_ticks() 
+        tiempo_actual = pygame.time.get_ticks() #Esta variable obtiene el tiempo actual 
 
-        for evento in pygame.event.get():
+        for evento in pygame.event.get():#este es el bucle de eventos que detecta las teclas presionadas por el usuario
 
-            if evento.type == pygame.QUIT:
+            if evento.type == pygame.QUIT:#si la ventana del juego es cerrada por el usuario se cierra completamente el programa
                 corriendo = False
 
-            if evento.type == pygame.KEYDOWN:
+            if evento.type == pygame.KEYDOWN:# si el usuario presiona una tecla se verifica cual es la tecla presionada para tomar la accion correspondiente 
 
-                if evento.key == pygame.K_ESCAPE:
+                if evento.key == pygame.K_ESCAPE:# si el usuario presiona la tecla ESC se cierra completamente el programa 
                     corriendo = False
 
-                if evento.key == pygame.K_SPACE and not game_over:
+                if evento.key == pygame.K_SPACE and not game_over:# si el usuario presiona la tecla espacio y el juego no ha terminado, se crea una nueva bala en la posicion del jugador y se agrega a la lista de balas para que se mueva y pueda eliminar a los vigilantes 
                     nueva_bala = Bala(
                         jugador_principal.rect.centerx - 4,
                         jugador_principal.rect.top
                     )
                     balas.append(nueva_bala)
 
-                if evento.key == pygame.K_r and game_over:
+                if evento.key == pygame.K_r and game_over:#si el usuario presina la tecla R y el juaego ha terminado se reinicia el juego, se restablecen las vidas del jugador 
 
                     jugador_principal.vidas = 3
-                    jugador_principal.rect.x = 200
-                    jugador_principal.rect.y = 200
+                    # Reiniciar fuera del banco
+                    jugador_principal.rect.x = mapa.rect.left - 100 
+                    jugador_principal.rect.y = mapa.rect.centery
 
                     vigilantes.clear()
                     vigilantes_muertos.clear()
                     balas.clear()
 
-                    for i in range(3):
-                        while True:
+                    for i in range(3):#Esto es para que el ciclo se ejecute 3 veces y se generen 3 vigilantes al reiniciar el juego 
+                        intentos = 0
+                        while intentos < 100:
                             x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
                             y = random.randint(mapa.rect.top + 50, mapa.rect.bottom - 50)
                             enemigo = Vigilante(x, y)
                             if not mapa.colisiona_pared(enemigo.rect):
                                 vigilantes.append(enemigo)
                                 break
+                            intentos += 1
 
-                    score = 0 
+                    score = 0 # esto reinicia el puntaje al reiniciar el juego 
                     game_over = False
                     victoria = False
                     dinero_recolectado = 0
 
-        if not game_over: 
+        if not game_over: # si el juego no ha terminado se ejecuta la logica del juego, si el juego ha terminado se detiene toda la logica y solo se muestra el mensaje de victoria o game over y la opcion de reiniciar el juego 
 
             teclas = pygame.key.get_pressed()
 
@@ -187,7 +192,7 @@ def iniciar_juego():
 
             jugador_principal.mover(teclas)
 
-            if mapa.colisiona_pared(jugador_principal.rect):
+            if mapa.colisiona_pared(jugador_principal.rect):#si el jugador colisiona con una pared del mapa, se devuelve a su posicion original antes de moverse para que no pueda atravesar las paredes
                 jugador_principal.rect = rect_original
 
             if jugador_principal.rect.left < 0:
@@ -199,25 +204,25 @@ def iniciar_juego():
             if jugador_principal.rect.bottom > pantalla.get_height():
                 jugador_principal.rect.bottom = pantalla.get_height()
 
-            if jugador_principal.rect.colliderect(dinero.rect):
+            if jugador_principal.rect.colliderect(dinero.rect):# si el jugador colisiona con el dinero, se incrementa el contador de dinero recolectado y se hace que el dinero reaparezca
                 dinero_recolectado += 1
-                dinero.reaparecer(pantalla.get_width(), pantalla.get_height())
+                #CORRECCIÓN: Pasar el objeto mapa para que reaparezca adentro 
+                dinero.reaparecer(mapa)
 
-            if jugador_principal.rect.colliderect(puerta.rect):
+            if jugador_principal.rect.colliderect(puerta.rect): #si el jugador colisiona con la puerta y ha recolectado suficiente dinero, se activa la victoria y se termina el juego
                 if dinero_recolectado >= dinero_necesario:
                     victoria = True
                     game_over = True
 
-            for vigilante in vigilantes:
+            for vigilante in vigilantes:# Aqui se mueve cada vigilante usando su metodo mover, se le pasa el jugadr y el mapa para que se mueva inteligentemente persiguiendo al jugador y evitando las paredes, si el vigilante colisiona con una pared se devuelve a su posicion original para que no atraviese las paredes
 
                 posicion_original = vigilante.rect.copy()
 
-                vigilante.mover(jugador_principal)
-
+                vigilante.mover(jugador_principal, mapa)
                 if mapa.colisiona_pared(vigilante.rect):
                     vigilante.rect = posicion_original
 
-            for bala in balas:
+            for bala in balas:#aqui se mueve cada bala usando su metodo mover 
                 bala.mover()
 
             for bala in balas[:]:
@@ -231,16 +236,18 @@ def iniciar_juego():
                             vigilantes_muertos.append(tiempo_actual + 2000)
                         break
 
-            for tiempo_muerte in vigilantes_muertos[:]:
+            for tiempo_muerte in vigilantes_muertos[:]:# Este es el ciclo que revisa si algun vigilante ha cumplido su tiempo de muerte para reaparecer
                 if tiempo_actual > tiempo_muerte:
 
-                    while True:
+                    intentos = 0
+                    while intentos < 100:
                         x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
                         y = random.randint(mapa.rect.top + 50, mapa.rect.bottom - 50)
                         nuevo_vigilante = Vigilante(x, y)
                         if not mapa.colisiona_pared(nuevo_vigilante.rect):
                             vigilantes.append(nuevo_vigilante)
                             break
+                        intentos += 1
 
                     vigilantes_muertos.remove(tiempo_muerte)
 
@@ -256,13 +263,14 @@ def iniciar_juego():
 
             balas = [b for b in balas if b.rect.y > 0] #aqui se eliminan las balas que salen de la pantalla 
 
-        pantalla.fill((60, 0, 0))
+        # Aqui se dibuja todo en la pantalla
+        pantalla.fill((60, 0, 0)) # Color del suelo exterior
 
-        mapa.dibujar(pantalla)
+        mapa.dibujar(pantalla) # Dibujar el edificio del banco
 
         jugador_principal.dibujar(pantalla)
         dinero.dibujar(pantalla)
-        puerta.dibujar(pantalla)
+        puerta.dibujar(pantalla) # Dibujar la puerta de entrada/salida
 
         for vigilante in vigilantes:
             vigilante.dibujar(pantalla)
@@ -277,7 +285,7 @@ def iniciar_juego():
         texto_score = fuente.render(f"Puntos: {score}", True, (255, 255, 255))
         pantalla.blit(texto_score, (20, 60))
 
-        texto_dinero = fuente.render(f"Dinero: {dinero_recolectado}", True, (0, 255, 0))
+        texto_dinero = fuente.render(f"Dinero: {dinero_recolectado}/{dinero_necesario}", True, (0, 255, 0))
         pantalla.blit(texto_dinero, (20, 100))
 
         if game_over:
