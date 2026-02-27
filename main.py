@@ -151,9 +151,11 @@ def iniciar_juego():
                     corriendo = False
 
                 if evento.key == pygame.K_SPACE and not game_over:# si el usuario presiona la tecla espacio y el juego no ha terminado, se crea una nueva bala en la posicion del jugador y se agrega a la lista de balas para que se mueva y pueda eliminar a los vigilantes 
+                    # He corregido la creacion de la bala para que use la direccion actual del jugador y dispare a cualquier angulo
                     nueva_bala = Bala(
                         jugador_principal.rect.centerx - 4,
-                        jugador_principal.rect.top
+                        jugador_principal.rect.centery - 4,
+                        jugador_principal.direccion
                     )
                     balas.append(nueva_bala)
 
@@ -224,8 +226,8 @@ def iniciar_juego():
                 if mapa.colisiona_pared(vigilante.rect):
                     vigilante.rect = posicion_original
 
-            for bala in balas:#aqui se mueve cada bala usando su metodo mover 
-                bala.mover()
+            for bala in balas:#aqui se mueve cada bala usando su metodo mover y ahora le paso el mapa para detectar las paredes
+                bala.mover(mapa)
 
             for bala in balas[:]:
                 for vigilante in vigilantes[:]:
@@ -263,7 +265,8 @@ def iniciar_juego():
                     if not jugador_principal.esta_vivo():
                         game_over = True
 
-            balas = [b for b in balas if b.rect.y > 0] #aqui se eliminan las balas que salen de la pantalla 
+            # He corregido la limpieza de balas para que se eliminen si salen por cualquier lado de la pantalla o si chocan con una pared
+            balas = [b for b in balas if 0 < b.rect.x < Ancho and 0 < b.rect.y < Alto and b.activa]
 
         # Aqui se dibuja todo en la pantalla
         pantalla.fill((60, 0, 0)) # Color del suelo exterior

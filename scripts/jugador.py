@@ -1,5 +1,5 @@
-#Jesus Ariel Santos 
-#24-EISN-2-034
+# Jesus Ariel Santos 
+# 24-EISN-2-034
 
 import pygame
 
@@ -25,21 +25,33 @@ class Jugador:
         #Este es el sistema de vidas del jugador 
         self.vidas = 3 
 
+        # Cree esta variable para que el jugador sepa hacia donde esta mirando y pueda disparar en esa direccion
+        # Por defecto mira hacia arriba (0 en X, -1 en Y)
+        self.direccion = (0, -1)
+
     def mover(self, teclas_presionadas):# Este metodo se encarga de mover al jugador segun las teclas que se presionen, recibe un diccionario con las teclas presionadas
 
         # Movimiento horizontal
         if teclas_presionadas[pygame.K_LEFT]:
             self.rect.x -= self.velocidad
+            # Actualizo la direccion a la izquierda
+            self.direccion = (-1, 0)
 
         if teclas_presionadas[pygame.K_RIGHT]:
             self.rect.x += self.velocidad
+            # Actualizo la direccion a la derecha
+            self.direccion = (1, 0)
 
         # Movimiento vertical
         if teclas_presionadas[pygame.K_UP]:
             self.rect.y -= self.velocidad
+            # Actualizo la direccion hacia arriba
+            self.direccion = (0, -1)
 
         if teclas_presionadas[pygame.K_DOWN]:
             self.rect.y += self.velocidad
+            # Actualizo la direccion hacia abajo
+            self.direccion = (0, 1)
 
         # Limites de pantalla
         pantalla = pygame.display.get_surface()
@@ -70,4 +82,4 @@ class Jugador:
 
     def esta_vivo(self): 
         #Esto devuelve true si el jugador tiene vidas restantes, de lo contrario devuelve false
-        return self.vidas > 0
+        return self.vidas > 0 
