@@ -13,12 +13,22 @@ class Dinero:# cree la clase dinero que representa el dinero que el jugador debe
         # Posición aleatoria dentro de la pantalla
         # He corregido esto para que se inicialice correctamente dentro del rango
         # Ahora usa el rect del mapa para aparecer dentro del banco
-        self.rect = pygame.Rect(
-            random.randint(mapa.rect.left + 20, mapa.rect.right - self.ancho - 20),
-            random.randint(mapa.rect.top + 20, mapa.rect.bottom - self.alto - 20),
-            self.ancho,
-            self.alto
-        )
+        
+        # --- Lógica para aparecer SOLO en pasillos (0) ---
+        pasillos = []
+        for fila_idx, fila in enumerate(mapa.grid):
+            for col_idx, celda in enumerate(fila):
+                if celda == 0: # Solo si es suelo/pasillo
+                    pasillos.append((col_idx, fila_idx))
+        
+        if pasillos:
+            col, fila = random.choice(pasillos)
+            x = mapa.rect.x + (col * mapa.tile_size) + (mapa.tile_size // 2 - self.ancho // 2)
+            y = mapa.rect.y + (fila * mapa.tile_size) + (mapa.tile_size // 2 - self.alto // 2)
+            self.rect = pygame.Rect(x, y, self.ancho, self.alto)
+        else:
+            # Fallback en caso de error de grid
+            self.rect = pygame.Rect(mapa.rect.centerx, mapa.rect.centery, self.ancho, self.alto)
 
         # Color verde para representar dinero
         self.color = (0, 200, 0)
@@ -33,5 +43,15 @@ class Dinero:# cree la clase dinero que representa el dinero que el jugador debe
     def reaparecer(self, mapa):
         # Mantiene la lógica de posición aleatoria pero corregida
         # Se ajusta para que el dinero siempre aparezca dentro del edificio del banco
-        self.rect.x = random.randint(mapa.rect.left + 20, mapa.rect.right - self.ancho - 20)
-        self.rect.y = random.randint(mapa.rect.top + 20, mapa.rect.bottom - self.alto - 20)
+        
+        # --- Buscamos de nuevo una posición de pasillo válida ---
+        pasillos = []
+        for fila_idx, fila in enumerate(mapa.grid):
+            for col_idx, celda in enumerate(fila):
+                if celda == 0:
+                    pasillos.append((col_idx, fila_idx))
+        
+        if pasillos:
+            col, fila = random.choice(pasillos)
+            self.rect.x = mapa.rect.x + (col * mapa.tile_size) + (mapa.tile_size // 2 - self.ancho // 2)
+            self.rect.y = mapa.rect.y + (fila * mapa.tile_size) + (mapa.tile_size // 2 - self.alto // 2)
