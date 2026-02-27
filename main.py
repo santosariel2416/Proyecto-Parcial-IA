@@ -97,8 +97,8 @@ def iniciar_juego():
     jugador_principal = Jugador(mapa.rect.left - 100, mapa.rect.centery)
 
     # El objeto dinero se crea pasando el objeto mapa para que aparezca dentro 
-    dinero = Dinero(mapa)
-    dinero.reaparecer(mapa)
+    # MODIFICACIÓN: Creamos una lista para manejar múltiples dineros si lo deseas o solo uno
+    dinero_objetivo = Dinero(mapa)
     dinero_recolectado = 0 #Esta es la variable que lleva el conteo del dinero recolectado por el jugador 
 
     # El objeto puerta se crea pasando el objeto mapa para ubicarse en la entrada 
@@ -183,6 +183,7 @@ def iniciar_juego():
                     game_over = False
                     victoria = False
                     dinero_recolectado = 0
+                    dinero_objetivo.reaparecer(mapa)
 
         if not game_over: # si el juego no ha terminado se ejecuta la logica del juego, si el juego ha terminado se detiene toda la logica y solo se muestra el mensaje de victoria o game over y la opcion de reiniciar el juego 
 
@@ -204,10 +205,11 @@ def iniciar_juego():
             if jugador_principal.rect.bottom > pantalla.get_height():
                 jugador_principal.rect.bottom = pantalla.get_height()
 
-            if jugador_principal.rect.colliderect(dinero.rect):# si el jugador colisiona con el dinero, se incrementa el contador de dinero recolectado y se hace que el dinero reaparezca
+            # CORRECCIÓN: Lógica de colisión con el dinero mejorada
+            if jugador_principal.rect.colliderect(dinero_objetivo.rect):# si el jugador colisiona con el dinero, se incrementa el contador de dinero recolectado y se hace que el dinero reaparezca
                 dinero_recolectado += 1
-                #CORRECCIÓN: Pasar el objeto mapa para que reaparezca adentro 
-                dinero.reaparecer(mapa)
+                score += 50
+                dinero_objetivo.reaparecer(mapa)
 
             if jugador_principal.rect.colliderect(puerta.rect): #si el jugador colisiona con la puerta y ha recolectado suficiente dinero, se activa la victoria y se termina el juego
                 if dinero_recolectado >= dinero_necesario:
@@ -269,7 +271,7 @@ def iniciar_juego():
         mapa.dibujar(pantalla) # Dibujar el edificio del banco
 
         jugador_principal.dibujar(pantalla)
-        dinero.dibujar(pantalla)
+        dinero_objetivo.dibujar(pantalla)
         puerta.dibujar(pantalla) # Dibujar la puerta de entrada/salida
 
         for vigilante in vigilantes:
