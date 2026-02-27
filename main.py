@@ -6,7 +6,7 @@ import pygame
 
 # importe el modulo SYS que me permite usar funciones del sistema como (EXIT) que sirve para cerrar el programa completamente 
 import sys 
-import random
+import random #importe random que se usa para generar numeros aleatorios, lo utilice porque quiero que el vijilante reaparezca en distintas posiciones 
 
 #aqui cree la instruccion para poder llamar la clase jugador desde el archivo jugador.py
 from scripts.jugador import Jugador
