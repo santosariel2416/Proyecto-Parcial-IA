@@ -4,7 +4,7 @@
 import pygame
 #importe random que se usa para generar numeros aleatorios, lo utilice porque quiero que el vigilante reaparezca en distintas posiciones
 import random
-import math
+import math #importe math para calcular la distancia entre el vigilante y el jugador, esto se utiliza para determinar si el vigilante detecta al jugador o no
 from scripts.mapa import EstadoMapa
 from scripts.a_estrella import Astar  #importe el algoritmo a estrella para que el vigilantes puedan persegir al jugador de manera inteligente y no solo moverse hacia abajo como lo hacia 
 
