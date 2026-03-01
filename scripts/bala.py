@@ -1,8 +1,10 @@
 #Jesus ariel Santos 24EISN-2-034
 import pygame
+import os # Importe el modulo OS para asegurar que el programa encuentre la imagen de la bala
+import math # Importe math para rotar la imagen segun la direccion del disparo
 
 class Bala:
-    # Agregamos 'direccion' aquí para que acepte los 4 argumentos que le manda el main
+    # Agregue 'direccion' aquí para que acepte los 4 argumentos que le manda el main
     def __init__(self, x, y, direccion):
         #este es el tamaño de las balas
         self.ancho = 8
@@ -24,6 +26,25 @@ class Bala:
         #cree esta variable para saber si la bala sigue activa o si ya choco con una pared
         self.activa = True
 
+        #CARGA Y AJUSTE DE LA IMAGEN bala.png 
+        ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ruta_imagen = os.path.join(ruta_base, "assets", "images", "bala.png")
+        
+        self.imagen_bala = None
+        try:
+            # Cargamos la imagen original
+            img_original = pygame.image.load(ruta_imagen).convert_alpha()
+            # La escalamos al tamaño que definiste
+            img_escalada = pygame.transform.scale(img_original, (self.ancho, self.alto))
+            
+            # Calculamos el ángulo para que la bala rote hacia donde se mueve
+            # Usamos -dir_y porque en Pygame el eje Y está invertido
+            angulo = math.degrees(math.atan2(-self.dir_y, self.dir_x)) - 90
+            self.imagen_bala = pygame.transform.rotate(img_escalada, angulo)
+        except:
+            # Respaldo si no se encuentra la imagen
+            print("Aviso: No se pudo cargar bala.png en assets/images/")
+
     def mover(self, mapa=None):
         # Ahora la bala se mueve segun la direccion guardada multiplicada por la velocidad
         self.rect.x += self.dir_x * self.velocidad
@@ -36,5 +57,9 @@ class Bala:
     def dibujar(self, superficie):
         #solo dibujo la bala si todavia no ha chocado con nada
         if self.activa:
-            #aqui dibujo las balas en la pantalla 
-            pygame.draw.rect(superficie, self.color, self.rect)
+            if self.imagen_bala:
+                # Dibujamos la imagen rotada en la posicion de la bala
+                superficie.blit(self.imagen_bala, self.rect)
+            else:
+                #aqui dibujo las balas en la pantalla 
+                pygame.draw.rect(superficie, self.color, self.rect)

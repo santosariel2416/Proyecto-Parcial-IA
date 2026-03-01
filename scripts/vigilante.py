@@ -1,10 +1,11 @@
 #Jesus Ariel Santos 
 #24-EISN-2-034
 
-import pygame
+import pygame # importe la libreria pygame para crear la ventana, dibujar objetos y manejar eventos
 #importe random que se usa para generar numeros aleatorios, lo utilice porque quiero que el vigilante reaparezca en distintas posiciones
 import random
 import math #importe math para calcular la distancia entre el vigilante y el jugador, esto se utiliza para determinar si el vigilante detecta al jugador o no
+import os # Importe el modulo OS para asegurar que el programa encuentre la imagen del vigilante
 from scripts.mapa import EstadoMapa
 from scripts.a_estrella import Astar  #importe el algoritmo a estrella para que el vigilantes puedan persegir al jugador de manera inteligente y no solo moverse hacia abajo como lo hacia 
 
@@ -67,12 +68,12 @@ class Timer(Nodo):#Este es un nodo que se ejecuta durante un tiempo determinado 
 class Vigilante:
     #Este es el constructor se ejecuta cuando se crea un vigilante
     def __init__(self, x, y):
-        # Tamaño del vigilante (ajustado a 30 para que quepa en los pasillos del banco)
-        self.ancho = 30
-        self.alto = 30
+        # --- ARREGLO DE TAMAÑO: Ajustado a 50 para llenar el pasillo de 64 ---
+        self.ancho = 50
+        self.alto = 50
 
-        # Este es un Rectángulo para el enemigo
-        self.rect = pygame.Rect(x, y, self.ancho, self.alto)
+        # Este es un Rectángulo para el enemigo (centrado en la posición x, y original)
+        self.rect = pygame.Rect(x - self.ancho//2, y - self.alto//2, self.ancho, self.alto)
 
         # Color azul para diferenciarlo del jugador
         self.color = (0, 0, 200)
@@ -80,7 +81,34 @@ class Vigilante:
         # Velocidad básica
         self.velocidad = 2
 
-        # --- CONFIGURACIÓN DEL ÁRBOL DE COMPORTAMIENTO ---
+        #CARGA Y ARREGLO DE IMAGEN vigilante.png 
+        ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ruta_imagen = os.path.join(ruta_base, "assets", "images", "vigilante.png")
+        
+        self.imagen_vigilante = None
+        self.imagen_soleada = None # Superficie para el efecto de sol
+        
+        try:
+            # Cargamos la imagen con transparencia
+            img_cargada = pygame.image.load(ruta_imagen).convert_alpha()
+            
+            # Ajustamos la imagen al nuevo tamano del vigilante 
+            self.imagen_vigilante = pygame.transform.scale(img_cargada, (self.ancho, self.alto))
+            
+            
+            # Creamos una copia para aplicar el efecto
+            self.imagen_soleada = self.imagen_vigilante.copy()
+            # Creamos una capa de luz amarilla/dorada brillante
+            luz_solar = pygame.Surface((self.ancho, self.alto)).convert_alpha()
+            luz_solar.fill((255, 200, 50, 100)) # Amarillo dorado con transparencia
+            # Fusionamos la luz con la imagen para que se vea soleado
+            self.imagen_soleada.blit(luz_solar, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+            
+        except:
+            # Respaldo visual si no se encuentra la imagen
+            print("Aviso: No se pudo cargar vigilante.png en assets/images/")
+
+        #  CONFIGURACIÓN DEL ÁRBOL DE COMPORTAMIENTO
         self.objetivo = None
         self.mapa_actual = None
         
@@ -132,6 +160,7 @@ class Vigilante:
 
             if camino and len(camino) > 1:
                 proximo_paso = camino[1]
+                # Ajuste de destino para el nuevo tamaño grande centrado
                 destino_x = self.mapa_actual.rect.x + (proximo_paso.x * self.mapa_actual.tile_size) + (self.mapa_actual.tile_size // 2 - self.ancho // 2)
                 destino_y = self.mapa_actual.rect.y + (proximo_paso.y * self.mapa_actual.tile_size) + (self.mapa_actual.tile_size // 2 - self.alto // 2)
 
@@ -164,4 +193,13 @@ class Vigilante:
 
     #Este metodo es el que dibuja al vigilante en pantalla
     def dibujar(self, superficie):
-        pygame.draw.rect(superficie, self.color, self.rect)
+        #ARREGLO EFECTO DOBLE: Usamos la imagen ya escalada
+        #ARREGLO EFECTO SOL: Usamos la versión con filtro soleado
+        if self.imagen_soleada:
+            superficie.blit(self.imagen_soleada, self.rect)
+        elif self.imagen_vigilante:
+            # Respaldo si falla el efecto de sol pero hay imagen
+            superficie.blit(self.imagen_vigilante, self.rect)
+        else:
+            # Respaldo: Rectangulo azul original si no hay imagen
+            pygame.draw.rect(superficie, self.color, self.rect)
