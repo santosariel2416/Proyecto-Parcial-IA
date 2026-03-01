@@ -7,6 +7,7 @@ import pygame
 # importe el modulo SYS que me permite usar funciones del sistema como (EXIT) que sirve para cerrar el programa completamente 
 import sys 
 import random #importe random que se usa para generar numeros aleatorios, lo utilice porque quiero que el vijilante reaparezca en distintas posiciones 
+import os # Importe el modulo OS para asegurar que el programa encuentre la carpeta de sonidos sin importar donde este guardado el juego
 
 #aqui cree la instruccion para poder llamar la clase jugador desde el archivo jugador.py
 from scripts.jugador import Jugador
@@ -90,6 +91,35 @@ def iniciar_juego():
 
     mapa = MapaBanco(Ancho, Alto) #aqui se crea el objeto mapa usando la clase mapabanco que se encarga de crear el mapa del banco con paredes y pasillos tipos laberintos, el mapa se centra en la pantalla usando el ancho y alto de la pantalla que se obtiene con pygame.display.Info() para que se adapte a cualquier tamaño de la pantalla
 
+    # Inicializo el audio y cargo los archivos
+    pygame.mixer.init()
+    
+    # He definido las variables de sonido como None al principio para que el juego no se cierre si no encuentra los archivos
+    sonido_disparo = None
+    sonido_moneda = None
+    sonido_muerte = None
+
+    # Correccion tecnica de ruta para la carpeta sonidos y assets
+    ruta_script = os.path.dirname(os.path.abspath(__file__))
+    dir_sonidos = os.path.join(ruta_script, "sonidos")
+    ruta_fondo = os.path.join(ruta_script, "assets", "images", "fondo.png")
+
+    # Intentamos cargar la imagen de fondo.png
+    try:
+        fondo_img = pygame.image.load(ruta_fondo).convert()
+        fondo_juego = pygame.transform.scale(fondo_img, (Ancho, Alto))
+    except:
+        # Si no la encuentra, creamos una superficie de color sólido para que el juego no falle
+        fondo_juego = pygame.Surface((Ancho, Alto))
+        fondo_juego.fill((60, 0, 0))
+
+    try: # aqui se cargan los sonidos del juego que se encuentran en la carpeta sonido 
+        sonido_disparo = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_dinero.wav"))
+        sonido_moneda = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_moneda.wav"))
+        sonido_muerte = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_muerte.wav"))
+    except:
+        pass
+
     #Esto permite colocar el nombre del juego arriba en la ventana 
     pygame.display.set_caption("Mision Roja")
 
@@ -151,6 +181,10 @@ def iniciar_juego():
                     corriendo = False
 
                 if evento.key == pygame.K_SPACE and not game_over:# si el usuario presiona la tecla espacio y el juego no ha terminado, se crea una nueva bala en la posicion del jugador y se agrega a la lista de balas para que se mueva y pueda eliminar a los vigilantes 
+                    # Suena el disparo
+                    if sonido_disparo:
+                        sonido_disparo.play()# si el sonido de disparos esta cargando, se reproduce el sonido al disparar
+
                     # He corregido la creacion de la bala para que use la direccion actual del jugador y dispare a cualquier angulo
                     nueva_bala = Bala(
                         jugador_principal.rect.centerx - 4,
@@ -207,8 +241,12 @@ def iniciar_juego():
             if jugador_principal.rect.bottom > pantalla.get_height():
                 jugador_principal.rect.bottom = pantalla.get_height()
 
-            # CORRECCIÓN: Lógica de colisión con el dinero mejorada
+            # Lógica de colisión con el dinero mejorada
             if jugador_principal.rect.colliderect(dinero_objetivo.rect):# si el jugador colisiona con el dinero, se incrementa el contador de dinero recolectado y se hace que el dinero reaparezca
+                
+                if sonido_moneda:
+                    sonido_moneda.play() # Suena el sonido de recolectar dinero
+                
                 dinero_recolectado += 1
                 score += 50
                 dinero_objetivo.reaparecer(mapa)
@@ -232,6 +270,8 @@ def iniciar_juego():
             for bala in balas[:]:
                 for vigilante in vigilantes[:]:
                     if bala.rect.colliderect(vigilante.rect):
+                        if sonido_muerte:
+                            sonido_muerte.play() # suena el sonido de muerte al eliminar a un vigilante
                         if bala in balas:
                             balas.remove(bala)
                         if vigilante in vigilantes:
@@ -257,6 +297,8 @@ def iniciar_juego():
 
             for vigilante in vigilantes[:]:
                 if vigilante.rect.colliderect(jugador_principal.rect):
+                    if sonido_muerte:
+                        sonido_muerte.play() # suena el sonido de muerte al ser golpeado por el vigilante
 
                     vigilantes.remove(vigilante)
                     jugador_principal.recibir_danio()
@@ -269,7 +311,8 @@ def iniciar_juego():
             balas = [b for b in balas if 0 < b.rect.x < Ancho and 0 < b.rect.y < Alto and b.activa]
 
         # Aqui se dibuja todo en la pantalla
-        pantalla.fill((60, 0, 0)) # Color del suelo exterior
+        # Dibujamos primero el fondo para que esté atrás de todo
+        pantalla.blit(fondo_juego, (0, 0))
 
         mapa.dibujar(pantalla) # Dibujar el edificio del banco
 
@@ -286,6 +329,9 @@ def iniciar_juego():
         fuente = pygame.font.SysFont(None, 40)
         texto_vidas = fuente.render(f"Vidas: {jugador_principal.vidas}", True, (255, 255, 255))
         pantalla.blit(texto_vidas, (20, 20))
+
+        texto_score = fuente.render(f"Puntos: {score}", True, (255, 255, 255))
+        pantalla.blit(texto_score, (20, 60))
 
         texto_score = fuente.render(f"Puntos: {score}", True, (255, 255, 255))
         pantalla.blit(texto_score, (20, 60))
@@ -309,6 +355,7 @@ def iniciar_juego():
             pantalla.blit(texto_reiniciar, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 + 20))
 
         pygame.display.flip()
+        # Se usa tiempo.tick porque asi se definio arriba en la funcion iniciar_juego
         tiempo.tick(60)
 
     pygame.quit()
