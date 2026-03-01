@@ -3,6 +3,7 @@
 
 import pygame # importe la libreria pygame para crear la ventana, dibujar objetos y manejar eventos
 import random # importe la libreria random para generar posiciones aleatorias para el dinero
+import os # Importe el modulo OS para asegurar que el programa encuentre la imagen del dinero
 
 class Dinero:# cree la clase dinero que representa el dinero que el jugador debe recoger para ganar el juego 
     def __init__(self, mapa):# Este es el constructor de la clase dinero se jecuta cuando se crea un objeto de tipo dinero, recibe el mapa para posiciones aleatorias dentro del banco
@@ -10,11 +11,26 @@ class Dinero:# cree la clase dinero que representa el dinero que el jugador debe
         self.ancho = 30
         self.alto = 30
 
+        # CARGA DE LA IMAGEN dinero.png 
+        # Buscamos la ruta de la carpeta assets/images/
+        ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ruta_imagen = os.path.join(ruta_base, "assets", "images", "dinero.png")
+        
+        self.imagen_dinero = None
+        try:
+            # Cargamos la imagen con soporte para transparencia
+            img_cargada = pygame.image.load(ruta_imagen).convert_alpha()
+            # La escalamos al tamaño exacto que definiste (30x30)
+            self.imagen_dinero = pygame.transform.scale(img_cargada, (self.ancho, self.alto))
+        except:
+            # Si no se encuentra la imagen, el juego usara el rectangulo verde como respaldo
+            print("Aviso: No se pudo cargar dinero.png, usando rectangulo de respaldo")
+
         # Posición aleatoria dentro de la pantalla
         # He corregido esto para que se inicialice correctamente dentro del rango
         # Ahora usa el rect del mapa para aparecer dentro del banco
         
-        # --- Lógica para aparecer SOLO en pasillos (0) ---
+        #Lógica para aparecer SOLO en pasillos (0) 
         pasillos = []
         for fila_idx, fila in enumerate(mapa.grid):
             for col_idx, celda in enumerate(fila):
@@ -34,17 +50,22 @@ class Dinero:# cree la clase dinero que representa el dinero que el jugador debe
         self.color = (0, 200, 0)
 
     def dibujar(self, superficie):# Este es el metodo para dibujar el dinero en la pantalla, recibe la superficie donde se va a dibujar
-        pygame.draw.rect(
-            superficie,
-            self.color,
-            self.rect
-        )
+        # Si la imagen existe, la dibujamos en la superficie
+        if self.imagen_dinero:
+            superficie.blit(self.imagen_dinero, self.rect)
+        else:
+            # Si no hay imagen, dibujamos el rectangulo verde original
+            pygame.draw.rect(
+                superficie,
+                self.color,
+                self.rect
+            )
 
     def reaparecer(self, mapa):
         # Mantiene la lógica de posición aleatoria pero corregida
         # Se ajusta para que el dinero siempre aparezca dentro del edificio del banco
         
-        # --- Buscamos de nuevo una posición de pasillo válida ---
+        #Buscamos de nuevo una posición de pasillo válida
         pasillos = []
         for fila_idx, fila in enumerate(mapa.grid):
             for col_idx, celda in enumerate(fila):
