@@ -18,16 +18,17 @@ from scripts.bala import Bala
 from scripts.vigilante import Vigilante #aqui se importa la clase vigilante para crear los enemigos que persiguen al jugador 
 
 #Importar dinero
-from scripts.dinero import Dinero
+from scripts.dinero import Dinero #aqui se importa la clase dinero para crear el dinero que el jugador debe recolectar para ganar el juego 
 
 from scripts.puerta import Puerta # importe la clase puerta para colocarlo en la esquina inferior derecha de la pantalla
 
-from scripts.mapa import MapaBanco 
+from scripts.mapa import MapaBanco #Aqui se importa la clase mapa banco para crear el mapa del banco donde se desarrolla el juego, el mapa tiene paredes y pasillos tipo laberinto
 
 # Menu principal del juego
 def menu_principal():
 
     pygame.init() #inicie todos los modulos de pygame correctamente sin esto no funciona nada 
+    pygame.mixer.init() # Inicializamos el audio para la musica de inicio
 
     info = pygame.display.Info()# utilice pygame.display.Info() para obtener el tamaño real de la pantalla
     Ancho = info.current_w
@@ -36,36 +37,100 @@ def menu_principal():
     pantalla = pygame.display.set_mode((Ancho, Alto))#Cree la pantalla usando el ancho y alto de la pantalla obtenida con pygame.display.Info()
     pygame.display.set_caption("Mision Roja")
 
+    # --- MUSICA DE INICIO ---
+    ruta_script = os.path.dirname(os.path.abspath(__file__))
+    ruta_inicio = os.path.join(ruta_script, "assets", "music", "musica inicio.mp3")
+    try:
+        pygame.mixer.music.load(ruta_inicio)
+        pygame.mixer.music.play(-1) # Suena en bucle en el menu
+        pygame.mixer.music.set_volume(0.5)
+    except:
+        print("Aviso: No se pudo cargar musica inicio.mp3")
+
     reloj = pygame.time.Clock() #cree un reloj para controlar la velocidad del menu y que no consuma muchos recursos de la computadora 
     en_menu = True
+    
+    # aqui cree una lista de gotas de sangre para el efecto de lluvia de sangre del menu 
+    gotas_sangre = []
+    for i in range(100): 
+        x = random.randint(0, Ancho)
+        y = random.randint(-Alto, 0) 
+        velocidad = random.randint(3, 8) 
+        tamano = random.randint(3, 6) 
+        gotas_sangre.append([x, y, velocidad, tamano])
+
+    # Variables para el efecto profesional de parpadeo
+    contador_alpha = 0
+    subiendo = True
+
+    #Cree los rectangulos para los botones de empezar el juego y salir del juego y les asigne una fuente para el texto de los botones 
+    rect_empezar = pygame.Rect(Ancho//2 - 200, Alto//2 + 20, 400, 70)
+    rect_salir = pygame.Rect(Ancho//2 - 200, Alto//2 + 110, 400, 70)
+    fuente_botones = pygame.font.SysFont("Arial", 40, bold=True)
 
     while en_menu: #Este es el bucle del menu principal que se ejecuta constantemente hasta que se presiona la tecla Enter para iniciar el juego o Esc para salir completamente del programa
 
-        pantalla.fill((30, 0, 0))#Color del fondo del menu 
+        pantalla.fill((20, 0, 0))#Fondo oscuro profesional (con un toque de rojo muy oscuro)
+        pos_mouse = pygame.mouse.get_pos()
 
-        fuente_titulo = pygame.font.SysFont(None, 100)
+        for gota in gotas_sangre:#Aqui se actualiza la posicion de cada gota de sangre para crear el efecto de lluvia de sangre del menu x
+            gota[1] += gota[2] 
+            if gota[1] > Alto:
+                gota[1] = random.randint(-100, 0)
+                gota[0] = random.randint(0, Ancho)
+            pygame.draw.rect(pantalla, (138, 0, 0), (gota[0], gota[1], gota[3]//2, gota[3]*2))
+            
+        fuente_titulo = pygame.font.SysFont("Impact", 150) 
+        texto_sombra = fuente_titulo.render("MISION ROJA", True, (0, 0, 0))
+        pantalla.blit(texto_sombra, (Ancho//2 - 395, Alto//2 - 245))
         texto_titulo = fuente_titulo.render("MISION ROJA", True, (255, 0, 0))
-        pantalla.blit(texto_titulo, (Ancho//2 - 300, Alto//2 - 200))
+        pantalla.blit(texto_titulo, (Ancho//2 - 400, Alto//2 - 250))
 
-        fuente_opcion = pygame.font.SysFont(None, 50)
-        texto_jugar = fuente_opcion.render("Presiona ENTER para jugar", True, (255, 255, 255))
-        pantalla.blit(texto_jugar, (Ancho//2 - 250, Alto//2))
+        pygame.draw.rect(pantalla, (255, 0, 0), (Ancho//2 - 300, Alto//2 - 100, 600, 5)) # linea decorativa roja arriba del titulo 
 
-        texto_salir = fuente_opcion.render("Presiona ESC para salir", True, (200, 200, 200))
-        pantalla.blit(texto_salir, (Ancho//2 - 220, Alto//2 + 60))
+        if subiendo:
+            contador_alpha += 5
+            if contador_alpha >= 255: subiendo = False
+        else:
+            contador_alpha -= 5
+            if contador_alpha <= 50: subiendo = True
 
-        for evento in pygame.event.get(): #Este es el bucle de eventos que detecta las teclas presionadas por el usuario
+        # Boton Enter para Jugar
+        col_e = (200, 0, 0) if rect_empezar.collidepoint(pos_mouse) else (138, 0, 0)
+        pygame.draw.rect(pantalla, col_e, rect_empezar, border_radius=10)
+        txt_e = fuente_botones.render("ENTER PARA JUGAR", True, (255, 255, 255))
+        txt_e.set_alpha(contador_alpha)
+        pantalla.blit(txt_e, (rect_empezar.x + 35, rect_empezar.y + 12))
 
-            if evento.type == pygame.QUIT:#si el usuario cierra la ventana del menu, se cierra completamente el programa 
+        # Boton para Salir del Juego
+        col_s = (200, 0, 0) if rect_salir.collidepoint(pos_mouse) else (138, 0, 0)
+        pygame.draw.rect(pantalla, col_s, rect_salir, border_radius=10)
+        txt_s = fuente_botones.render("SALIR DEL JUEGO", True, (255, 255, 255))
+        txt_s.set_alpha(contador_alpha)
+        pantalla.blit(txt_s, (rect_salir.x + 55, rect_salir.y + 12))
+
+        fuente_creditos = pygame.font.SysFont("Arial", 20)
+        texto_autor = fuente_creditos.render("Desarrollado por: Jesus Ariel Santos", True, (100, 100, 100))
+        pantalla.blit(texto_autor, (20, Alto - 40))
+
+        for evento in pygame.event.get(): 
+            if evento.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
-            if evento.type == pygame.KEYDOWN: #si el usuario presiona una tecla, se verifica cual es la tecla presionada para tomar la accion correspondiente 
-
+            if evento.type == pygame.MOUSEBUTTONDOWN:
+                if evento.button == 1: 
+                    if rect_empezar.collidepoint(evento.pos):
+                        pygame.mixer.music.stop()
+                        en_menu = False
+                        iniciar_juego()
+                    if rect_salir.collidepoint(evento.pos):
+                        pygame.quit()
+                        sys.exit()
+            if evento.type == pygame.KEYDOWN: 
                 if evento.key == pygame.K_RETURN:
+                    pygame.mixer.music.stop() 
                     en_menu = False
                     iniciar_juego()
-
                 if evento.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
@@ -73,9 +138,6 @@ def menu_principal():
         pygame.display.flip()
         reloj.tick(60) #Este es l contador de el reloj que controla la velocidad del menu,
 
-
-
-#Cree esta funcion que contiene todo el juego 
 def iniciar_juego():
 
     # Aquí iniciamos todos los modulos de pygame correctamente sin esto no funciona el teclado no funciona la ventana, no funcionaria nada
@@ -103,6 +165,18 @@ def iniciar_juego():
     ruta_script = os.path.dirname(os.path.abspath(__file__))
     dir_sonidos = os.path.join(ruta_script, "sonidos")
     ruta_fondo = os.path.join(ruta_script, "assets", "images", "fondo.png")
+    
+    # Rutas para las musicas del juego 
+    ruta_musica_fondo = os.path.join(ruta_script, "assets", "music", "musica fondo.mp3")
+    ruta_musica_perdiste = os.path.join(ruta_script, "assets", "music", "musica perdiste.mp3")
+    ruta_musica_victoria = os.path.join(ruta_script, "assets", "music", "musica victoria.mp3")
+    
+    try:
+        pygame.mixer.music.load(ruta_musica_fondo)
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.4)
+    except:
+        pass
 
     # Intentamos cargar la imagen de fondo.png
     try:
@@ -127,7 +201,6 @@ def iniciar_juego():
     jugador_principal = Jugador(mapa.rect.left - 100, mapa.rect.centery)
 
     # El objeto dinero se crea pasando el objeto mapa para que aparezca dentro 
-    # MODIFICACIÓN: Creamos una lista para manejar múltiples dineros si lo deseas o solo uno
     dinero_objetivo = Dinero(mapa)
     dinero_recolectado = 0 #Esta es la variable que lleva el conteo del dinero recolectado por el jugador 
 
@@ -160,15 +233,39 @@ def iniciar_juego():
     corriendo = True
 
     game_over = False #Esta funcion controla si el juego termino
+    musica_perdiste_activa = False # Variable para controlar que la música de muerte no se cargue repetidamente
+    musica_victoria_activa = False # Variable para controlar que la musica de victoria no se cargue repetidamente
 
     score = 0 #Este es el sistema de puntos 
 
     balas = []
 
+        # configuracion del efecto de lluvia de sangre para la pantalla de game over 
+    gotas_sangre_go = [[random.randint(0, Ancho), random.randint(-Alto, 0), random.randint(4, 10), random.randint(3, 7)] for _ in range(150)]
+    alpha_perdiste = 0
+    subiendo_perdiste = True
+    rect_reintentar = pygame.Rect(Ancho//2 - 200, Alto//2 + 50, 400, 70)
+    rect_volver_inicio = pygame.Rect(Ancho//2 - 200, Alto//2 + 140, 400, 70) 
+
+    # CONFIGURACIÓN DE EFECTO DE LLUVIA DE DINERO PARA la VICTORIA 
+    lluvia_dinero = []
+    for i in range(200): # Muchas gotas para la victoria
+        x = random.randint(0, Ancho)
+        y = random.randint(-Alto, 0)
+        velocidad = random.randint(3, 9) 
+        tamano = random.randint(10, 20) # Más grandes
+        color = random.choice([(0, 150, 0), (255, 215, 0)]) # Verde billete o Oro
+        lluvia_dinero.append([x, y, velocidad, tamano, color])
+
+    # Variables de parpadeo para Victoria
+    alpha_victoria = 0
+    subiendo_victoria = True
+
     # Este es el Bucle principal se ejecuta constantemente, si se detiene se cierra el juego
     while corriendo:
 
         tiempo_actual = pygame.time.get_ticks() #Esta variable obtiene el tiempo actual 
+        pos_mouse = pygame.mouse.get_pos()
 
         for evento in pygame.event.get():#este es el bucle de eventos que detecta las teclas presionadas por el usuario
 
@@ -180,7 +277,7 @@ def iniciar_juego():
                 if evento.key == pygame.K_ESCAPE:# si el usuario presiona la tecla ESC se cierra completamente el programa 
                     corriendo = False
 
-                if evento.key == pygame.K_SPACE and not game_over:# si el usuario presiona la tecla espacio y el juego no ha terminado, se crea una nueva bala en la posicion del jugador y se agrega a la lista de balas para que se mueva y pueda eliminar a los vigilantes 
+                if evento.key == pygame.K_SPACE and not game_over and not victoria:# si el usuario presiona la tecla espacio y el juego no ha terminado, se crea una nueva bala
                     # Suena el disparo
                     if sonido_disparo:
                         sonido_disparo.play()# si el sonido de disparos esta cargando, se reproduce el sonido al disparar
@@ -193,18 +290,21 @@ def iniciar_juego():
                     )
                     balas.append(nueva_bala)
 
-                if evento.key == pygame.K_r and game_over:#si el usuario presina la tecla R y el juaego ha terminado se reinicia el juego, se restablecen las vidas del jugador 
-
+                if evento.key == pygame.K_r and (game_over or victoria):#si el usuario presina la tecla R y el juaego ha terminado se reinicia el juego, se restablecen las vidas del jugador 
+                    #REINICIO COMPLETO
+                    musica_perdiste_activa = False
+                    musica_victoria_activa = False
+                    try:
+                        pygame.mixer.music.load(ruta_musica_fondo)
+                        pygame.mixer.music.play(-1)
+                    except: pass
                     jugador_principal.vidas = 3
-                    # Reiniciar fuera del banco
                     jugador_principal.rect.x = mapa.rect.left - 100 
                     jugador_principal.rect.y = mapa.rect.centery
-
                     vigilantes.clear()
                     vigilantes_muertos.clear()
                     balas.clear()
-
-                    for i in range(3):#Esto es para que el ciclo se ejecute 3 veces y se generen 3 vigilantes al reiniciar el juego 
+                    for i in range(3):
                         intentos = 0
                         while intentos < 100:
                             x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
@@ -214,14 +314,50 @@ def iniciar_juego():
                                 vigilantes.append(enemigo)
                                 break
                             intentos += 1
-
-                    score = 0 # esto reinicia el puntaje al reiniciar el juego 
+                    score = 0 
                     game_over = False
                     victoria = False
                     dinero_recolectado = 0
                     dinero_objetivo.reaparecer(mapa)
 
-        if not game_over: # si el juego no ha terminado se ejecuta la logica del juego, si el juego ha terminado se detiene toda la logica y solo se muestra el mensaje de victoria o game over y la opcion de reiniciar el juego 
+            if evento.type == pygame.MOUSEBUTTONDOWN and (game_over or victoria):
+                if evento.button == 1:
+                    if rect_reintentar.collidepoint(evento.pos):
+                        # Reinicio por clic
+                        musica_perdiste_activa = False
+                        musica_victoria_activa = False
+                        try:
+                            pygame.mixer.music.load(ruta_musica_fondo)
+                            pygame.mixer.music.play(-1)
+                        except: pass
+                        jugador_principal.vidas = 3
+                        jugador_principal.rect.x = mapa.rect.left - 100 
+                        jugador_principal.rect.y = mapa.rect.centery
+                        vigilantes.clear()
+                        vigilantes_muertos.clear()
+                        balas.clear()
+                        for i in range(3):
+                            intentos = 0
+                            while intentos < 100:
+                                x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
+                                y = random.randint(mapa.rect.top + 50, mapa.rect.bottom - 50)
+                                enemigo = Vigilante(x, y)
+                                if not mapa.colisiona_pared(enemigo.rect):
+                                    vigilantes.append(enemigo)
+                                    break
+                                intentos += 1
+                        score = 0
+                        game_over = False
+                        victoria = False
+                        dinero_recolectado = 0
+                        dinero_objetivo.reaparecer(mapa)
+                    
+                    if rect_volver_inicio.collidepoint(evento.pos):
+                        pygame.mixer.music.stop()
+                        corriendo = False 
+                        menu_principal()
+
+        if not game_over and not victoria: # si el juego no ha terminado se ejecuta la logica del juego, si el juego ha terminado se detiene toda la logica y solo se muestra el mensaje de victoria o game over y la opcion de reiniciar el juego 
 
             teclas = pygame.key.get_pressed()
 
@@ -253,8 +389,16 @@ def iniciar_juego():
 
             if jugador_principal.rect.colliderect(puerta.rect): #si el jugador colisiona con la puerta y ha recolectado suficiente dinero, se activa la victoria y se termina el juego
                 if dinero_recolectado >= dinero_necesario:
+                    # DETENEMOS LA MUSICA Y CARGAMOS LA DE VICTORIA INMEDIATAMENTE
+                    pygame.mixer.music.stop()
+                    try:
+                        pygame.mixer.music.load(ruta_musica_victoria)
+                        pygame.mixer.music.play(-1)
+                        pygame.mixer.music.set_volume(0.6)
+                    except:
+                        print("No se encontró: musica victoria.mp3")
                     victoria = True
-                    game_over = True
+                    musica_victoria_activa = True
 
             for vigilante in vigilantes:# Aqui se mueve cada vigilante usando su metodo mover, se le pasa el jugadr y el mapa para que se mueva inteligentemente persiguiendo al jugador y evitando las paredes, si el vigilante colisiona con una pared se devuelve a su posicion original para que no atraviese las paredes
 
@@ -305,7 +449,14 @@ def iniciar_juego():
                     vigilantes_muertos.append(tiempo_actual + 2000)
 
                     if not jugador_principal.esta_vivo():
+                        # DETENEMOS LA MUSICA Y CARGAMOS LA DE PERDISTE
+                        pygame.mixer.music.stop()
+                        try:
+                            pygame.mixer.music.load(ruta_musica_perdiste)
+                            pygame.mixer.music.play(-1)
+                        except: pass
                         game_over = True
+                        musica_perdiste_activa = True
 
             # He corregido la limpieza de balas para que se eliminen si salen por cualquier lado de la pantalla o si chocan con una pared
             balas = [b for b in balas if 0 < b.rect.x < Ancho and 0 < b.rect.y < Alto and b.activa]
@@ -333,33 +484,91 @@ def iniciar_juego():
         texto_score = fuente.render(f"Puntos: {score}", True, (255, 255, 255))
         pantalla.blit(texto_score, (20, 60))
 
-        texto_score = fuente.render(f"Puntos: {score}", True, (255, 255, 255))
-        pantalla.blit(texto_score, (20, 60))
-
         texto_dinero = fuente.render(f"Dinero: {dinero_recolectado}/{dinero_necesario}", True, (0, 255, 0))
         pantalla.blit(texto_dinero, (20, 100))
 
-        if game_over:
-
-            fuente_grande = pygame.font.SysFont(None, 80)
+        if game_over or victoria:
+            # Fuentes compartidas
+            f_grande = pygame.font.SysFont("Impact", 150)
+            f_btn = pygame.font.SysFont("Arial", 40, bold=True)
 
             if victoria:
-                texto_estado = fuente_grande.render("VICTORIA", True, (0, 255, 0))
-            else:
-                texto_estado = fuente_grande.render("GAME OVER", True, (255, 0, 0))
+                # PORTADA DE VICTORIA 
+                # Fondo especial de victoria (Verde dinero)
+                pantalla.fill((0, 30, 0))
 
-            pantalla.blit(texto_estado, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 - 50))
+                # DIBUJAR LLUVIA DE DINERO/CONFECI
+                for billete in lluvia_dinero:
+                    billete[1] += billete[2] # Caen
+                    if billete[1] > Alto: billete[1] = random.randint(-200, 0)
+                    pygame.draw.rect(pantalla, billete[4], (billete[0], billete[1], billete[3], billete[3]//2), border_radius=3)
 
-            fuente_pequena = pygame.font.SysFont(None, 40)
-            texto_reiniciar = fuente_pequena.render("Presiona R para reiniciar", True, (255, 255, 255))
-            pantalla.blit(texto_reiniciar, (pantalla.get_width()//2 - 200, pantalla.get_height()//2 + 20))
+                # Titulo gigante "VICTORIA"
+                txt_p = f_grande.render("VICTORIA", True, (255, 255, 255))
+                pantalla.blit(txt_p, (Ancho//2 - 275, Alto//2 - 255))
+
+                # Mensaje personalizado
+                f_mensaje = pygame.font.SysFont("Arial", 70, bold=True)
+                txt_m = f_mensaje.render("¡ERES UN DURO!", True, (255, 215, 0)) # Dorado
+                pantalla.blit(txt_m, (Ancho//2 - 240, Alto//2 - 90))
+
+                # Lógica de parpadeo compartida
+                if subiendo_victoria:
+                    alpha_victoria += 8
+                    if alpha_victoria >= 255: subiendo_victoria = False
+                else:
+                    alpha_victoria -= 8
+                    if alpha_victoria <= 50: subiendo_victoria = True
+
+                #BOTONES DE VICTORIA
+                col_r = (200, 0, 0) if rect_reintentar.collidepoint(pos_mouse) else (138, 0, 0)
+                pygame.draw.rect(pantalla, col_r, rect_reintentar, border_radius=10)
+                txt_r = f_btn.render("REINTENTAR JUEGO", True, (255, 255, 255))
+                txt_r.set_alpha(alpha_victoria)
+                pantalla.blit(txt_r, (Ancho//2 - 165, Alto//2 + 58))
+
+                col_v = (200, 0, 0) if rect_volver_inicio.collidepoint(pos_mouse) else (138, 0, 0)
+                pygame.draw.rect(pantalla, col_v, rect_volver_inicio, border_radius=10)
+                txt_v = f_btn.render("VOLVER AL INICIO", True, (255, 255, 255))
+                txt_v.set_alpha(alpha_victoria)
+                pantalla.blit(txt_v, (Ancho//2 - 150, Alto//2 + 148))
+
+            elif game_over:
+                pantalla.fill((10, 0, 0))
+                for g in gotas_sangre_go:
+                    g[1] += g[2]
+                    if g[1] > Alto: g[1] = random.randint(-100, 0)
+                    pygame.draw.rect(pantalla, (100, 0, 0), (g[0], g[1], g[3]//2, g[3]*2))
+                
+                txt_p = f_grande.render("PERDISTE", True, (255, 0, 0))
+                pantalla.blit(txt_p, (Ancho//2 - 250, Alto//2 - 205))
+
+                if subiendo_perdiste:
+                    alpha_perdiste += 8
+                    if alpha_perdiste >= 255: subiendo_perdiste = False
+                else:
+                    alpha_perdiste -= 8
+                    if alpha_perdiste <= 50: subiendo_perdiste = True
+
+                #BOTONES DE DERROTA 
+                col_r = (200, 0, 0) if rect_reintentar.collidepoint(pos_mouse) else (138, 0, 0)
+                pygame.draw.rect(pantalla, col_r, rect_reintentar, border_radius=10)
+                txt_r = f_btn.render("REINTENTAR JUEGO", True, (255, 255, 255))
+                txt_r.set_alpha(alpha_perdiste)
+                pantalla.blit(txt_r, (Ancho//2 - 165, Alto//2 + 58))
+
+                col_v = (200, 0, 0) if rect_volver_inicio.collidepoint(pos_mouse) else (138, 0, 0)
+                pygame.draw.rect(pantalla, col_v, rect_volver_inicio, border_radius=10)
+                txt_v = f_btn.render("VOLVER AL INICIO", True, (255, 255, 255))
+                txt_v.set_alpha(alpha_perdiste)
+                pantalla.blit(txt_v, (Ancho//2 - 150, Alto//2 + 148))
 
         pygame.display.flip()
         # Se usa tiempo.tick porque asi se definio arriba en la funcion iniciar_juego
         tiempo.tick(60)
 
-    pygame.quit()
-    sys.exit()
+    pygame.quit() #si la ventana del juego es cerrada por el usuario se cierra completamente el programa
+    sys.exit() # si el usuario presiona la tecla ESC se cierra completamente el programa 
 
 
 if __name__ == "__main__":
