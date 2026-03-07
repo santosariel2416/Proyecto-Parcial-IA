@@ -1,71 +1,71 @@
 #Jesus Ariel Santos
-#24-EISN-2-034 
-import heapq
-import time
+#24-EISN-2-034
+import heapq #importamos la libreia heapq para usar una cola de prioridad en la implementacion del algoritmo A*
+import time #importamos la libreria time para medir el tiempo de ejecutar el algoritmo A*
 
-class Nodo:#clse nodo para representar cada estado en la busqueda del algoritmo A*
-    def __init__(self, dato, padre=None, h=0):#Este es el costructor del nodo, recibe el estado (dato), el nodo padre y la heuristica
-        self.dato = dato #estado del nodo en este caso es un estado del mapa con la posicion del vigilante y el jugador 
-        self.padre = padre #nodo padre para poder reconstruir el camino al final
-        self.g = 0 if padre is None else padre.g + 1 # Costo acumulado desde el inicio
-        self.h = h # Esta es la heuristica, que se calcula al crear el nodo y se pasa como parametro, esta se calcula usando la funcion costo del estado actual al estado final que es el jugador 
-        self.f = self.g + self.h #costo total 
+#Este script implementa el algoritmo A* para encontrar el camino mas corto entre un estado inicial y un estado final, usando una cola de prioridad
+class Nodo:
+    def __init__(self, dato, padre=None, h=0):#El nod tiene un dato que representa el estado, un padre que es el nodo anterior en el camino, una heuristica h que es una estimacion del costo restante para llegar al estado final, y un costo g que es el costo acumulado desde el nodo inical hasta el nodo actual
+        self.dato = dato
+        self.padre = padre
+        self.g = 0 if padre is None else padre.g + 1  # Costo acumulado
+        self.h = h  # Heurística
+        self.f = self.g + self.h  # Costo total
 
-    def __lt__(self, otro): # Este metodo es necesario para que el heapq pueda comparar nodos y ordenarlos por su costo total f 
+    def __lt__(self, otro):#el metodo __lt__ se usa para comparar dos nodos en la cola de prioridad, se compara el costo total f de cada nodo
         return self.f < otro.f
 
-    def __eq__(self, otro):# este es el metodo de igualdad, se usa para comparar nodos y saber si ya hemos visitado un nodo o no
-        # Compara el estado (EstadoMapa) dentro del nodo
+    def __eq__(self, otro): # el metodo eq se usa para comparar dos nodos, se comparan sus datos, es decir, sus estados
         return self.dato == otro.dato
 
-    def __hash__(self):# Este metodo es necesario para que el nodo pueda ser agregado a un set de nodos visitados 
+    def __hash__(self):#el metodo hash se usa para poder usar los nodos en un conjunto, se usa el hash del dato del nodo, es decir, el hash del estado
         return hash(self.dato)
 
 
-def Astar(estado_inicial, estado_final): #funcion que implmenta el algoritmo A*, recibe el estado inicial y el estado final, en este caso el estado inicial es la posicion del vigilante y el estado final es la posicion del jugador 
-    # Si el inicio y el final son el mismo, no hay nada que buscar
-    if estado_inicial == estado_final:# si el estado inicial es igual al estado final 
-        return [estado_inicial]
+def Astar(estado_inicial, estado_final):#La funcion Astar recibe un estado inicial y un estado final, y devuelve el camino mas corto entre ambos estados, el numero de nodos generados y el tiempo de ejecucion del algoritmo
+    totalnodos = 1
+    nodo_inicial = Nodo(estado_inicial, None, estado_inicial.Costo(estado_final))
 
-    nodoactual = Nodo(
-        estado_inicial,
-        None,
-        estado_inicial.Costo(estado_final)
-    ) #cree el nodo inicial con el estado inicial, sin padre y con la heuristica calculadora usando la funcion costo del estado inicial al estado final
+    nodos_generados = []
+    nodos_visitados = set()
 
-    nodosgenerado = [] #Esta es la lista de nodos generados que se usara como una cola de prioridad para el algoritmo A*, 
-    heapq.heapify(nodosgenerado) # 
-    heapq.heappush(nodosgenerado, nodoactual)
+    heapq.heapify(nodos_generados)#inicializamos la cola de prioridad vacia y el conjuntos de nodos visitados vacios
+    heapq.heappush(nodos_generados, nodo_inicial)
 
-    # Usare set para que la búsqueda de nodos visitados sea ultra rápida
-    nodosvisitados = set()
+    inicio = time.perf_counter()#iniciamos el contador de tiempo para medir el tiempo de ejecucion del algoritmo
 
-    while nodosgenerado: #este ciclo se ejecuta mientras haya nodos generados por revisar 
-        nodoactual = heapq.heappop(nodosgenerado) #
+    while nodos_generados:#
+        nodo_actual = heapq.heappop(nodos_generados)
 
-        # Si llegamos al destino, reconstruimos el camino
-        if nodoactual.dato == estado_final: # si el estado del nodo actual es igual al estado final, hemos encontrado el camino 
-            camino = []
-            while nodoactual:
-                camino.append(nodoactual.dato)
-                nodoactual = nodoactual.padre
-            camino.reverse()
-            return camino # Retornamos solo el camino para el vigilante
+        if nodo_actual.dato == estado_final:# si el nodo actual es el estado final entonces se ha encontrado el camino mas corto, se sale del ciclo
+            break
 
-        nodosvisitados.add(nodoactual) # Agregamos el nodo actual a los nodos visitados para no revisarlo de nuevo 
+        if nodo_actual in nodos_visitados:# si el nodo actual ya ha sido visitado entonces se sigue con el siguiente nodo en la cola de prioridad
+            continue
 
-        sucesores = nodoactual.dato.GenerarSucesores() #Aqui generamos los sucesores del nodo actual usando el metodo GenerarSucesores del estado 
+        nodos_visitados.add(nodo_actual)
 
-        for sucesor in sucesores:#este ciclo se ejecuta para cada sucesor generado por el nodo actual 
+        sucesores = nodo_actual.dato.GenerarSucesores() # se generan los sucesores del nodo actual, es decir, los estados que pueden ser alcanzados desde el estado del nodo actual
+        totalnodos += len(sucesores)
+
+        for sucesor in sucesores:
             nuevo_nodo = Nodo(
                 sucesor,
-                nodoactual,
+                nodo_actual,
                 sucesor.Costo(estado_final)
             )
 
-            if nuevo_nodo in nodosvisitados: # Aqui revisamos si el nuevo nodo ya ha sido visitado, si es asi lo ignoramos y seguimos con el siguiente sucesor 
-                continue
+            if nuevo_nodo not in nodos_visitados:
+                heapq.heappush(nodos_generados, nuevo_nodo)
 
-            heapq.heappush(nodosgenerado, nuevo_nodo) #si el nuevo nodo no ha sido visitado, lo agregamos a la lista de nodos generados para ser revisado en el futuro 
+    # Reconstrucción del camino
+    camino = []
+    while nodo_actual: # se reconstruye el camino desde el nodo actual hasta el nodo inicial, agregando los datos de cada nodo al camino
+        camino.append(nodo_actual.dato)
+        nodo_actual = nodo_actual.padre
 
-    return [] # Si no hay camino, devolvemos lista vacía
+    camino.reverse()
+
+    fin = time.perf_counter()# Se detiene el contador de tiempo para medir el tiempo de ejecucion del algoritmo 
+
+    return camino, totalnodos, fin - inicio # se devuelve el camino encontrado , el numero de nodos generados y el tiempo de ejecucion del algoritmo
