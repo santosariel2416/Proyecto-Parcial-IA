@@ -1,205 +1,172 @@
-#Jesus Ariel Santos 
-#24-EISN-2-034
+# Jesus Ariel Santos 
+# 24-EISN-2-034
 
-import pygame # importe la libreria pygame para crear la ventana, dibujar objetos y manejar eventos
-#importe random que se usa para generar numeros aleatorios, lo utilice porque quiero que el vigilante reaparezca en distintas posiciones
+import pygame 
 import random
-import math #importe math para calcular la distancia entre el vigilante y el jugador, esto se utiliza para determinar si el vigilante detecta al jugador o no
-import os # Importe el modulo OS para asegurar que el programa encuentre la imagen del vigilante
+import math 
+import os 
 from scripts.mapa import EstadoMapa
-from scripts.a_estrella import Astar  #importe el algoritmo a estrella para que el vigilantes puedan persegir al jugador de manera inteligente y no solo moverse hacia abajo como lo hacia 
+from scripts.a_estrella import Astar  
+from scripts.arbol_comportamiento import Selector, Secuencia, Accion
 
-# ESTRUCTURA DEL ÁRBOL DE COMPORTAMIENTO 
-class Nodo:#Esta es la clase base para los nodos del arbol de comportamiento, cada nodo puede tener hijos y una funcion de ejecucion 
-    def __init__(self):# es el constructor de la clase nodo, se ejecuta cada vez que se crea un nodo, en este caso inicializa una lista vacia de hujos
-        self.hijos = []
 
-    def agregar_hijo(self, hijo):#Este metodo se utiliza para agregar un hijo a un nodo
-        self.hijos.append(hijo)
-
-    def ejecutar(self):#Este metodo es el que se llama para ejecutar la logica del nodo
-        pass
-
-class Selector(Nodo):#Este nodo ejecuta a sus hijos en orden y devuelve True si alguno de ellos devuelve True, si todos devuelven False, devuelve false 
-    def ejecutar(self):
-        for hijo in self.hijos:
-            if hijo.ejecutar():
-                return True
-        return False
-
-class Secuencia(Nodo):#Este nodo ejecuta a sus hijos en orden y devuelve False si alguno de ellos devuelve False, si todos devuelven True, devuelven True 
-    def ejecutar(self):
-        for hijo in self.hijos:
-            if not hijo.ejecutar():
-                return False
-        return True
-
-class Accion(Nodo):#Este nodo ejecuta una accion especifico, se le pasa una funcion al constructor y se ejecuta esa funcion cuando se llama a ejecutar 
-    def __init__(self, accion):
-        super().__init__()
-        self.accion = accion
-
-    def ejecutar(self):# Aqui se ejecuta la funcion que se le paso al constructor, esta funcion debe devolver un booleano para que el arbol de comportamiento funcione correctamente
-        return self.accion()
-
-class Invertir(Nodo):#Este nodo invierte el resultado de su hijo , si el hijo devuelve true, devuelve false y viceversa
-    def __init__(self, accion):
-        super().__init__()
-        self.agregar_hijo(accion)
-
-    def ejecutar(self):# Aqui se ejecuta el hijo y se invierte su resultado
-        return not self.hijos[0].ejecutar()
-
-class Timer(Nodo):#Este es un nodo que se ejecuta durante un tiempo determinado y luego se reinicia 
-    def __init__(self, tiempo):
-        super().__init__()
-        self.tiempo = tiempo
-        self.tiempo_restante = tiempo
-
-    def ejecutar(self):#Este metodo se ejecuta cada vez que se llama a ejecutar, si el tiempo restante es mayor a 0, se decrementa y devuelve false, si el tiempo restante es 0, se reinicia el tiempo y se ejecuta el hijo
-        if self.tiempo_restante > 0:
-            self.tiempo_restante -= 1
-            return False
-        else:
-            self.tiempo_restante = self.tiempo
-            return self.hijos[0].ejecutar()#aqui se ejecuta el hijo del timer, este hijo debe ser una accion que se quiera ejecutar cada cierto tiempo, en este caso es la accion de desactivar el objetivo del vigilante cada 180 frames 
-
-#cree la clase vigilante esta va a representar al enemigo del juego 
 class Vigilante:
-    #Este es el constructor se ejecuta cuando se crea un vigilante
     def __init__(self, x, y):
-        # --- ARREGLO DE TAMAÑO: Ajustado a 50 para llenar el pasillo de 64 ---
+
         self.ancho = 50
         self.alto = 50
 
-        # Este es un Rectángulo para el enemigo (centrado en la posición x, y original)
-        self.rect = pygame.Rect(x - self.ancho//2, y - self.alto//2, self.ancho, self.alto)
-
-        # Color azul para diferenciarlo del jugador
+        self.rect = pygame.Rect(0, 0, 40, 40)
+        self.rect.center = (x, y)
+        
         self.color = (0, 0, 200)
 
-        # Velocidad básica
-        self.velocidad = 2
+        # MÁS RÁPIDO
+        self.velocidad = 3  
 
-        #CARGA Y ARREGLO DE IMAGEN vigilante.png 
+        self.direccion = "abajo" 
+
+        # CARGA DE la IMAGEN
         ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         ruta_imagen = os.path.join(ruta_base, "assets", "images", "vigilante.png")
-        
-        self.imagen_vigilante = None
-        self.imagen_soleada = None # Superficie para el efecto de sol
-        
-        try:
-            # Cargamos la imagen con transparencia
-            img_cargada = pygame.image.load(ruta_imagen).convert_alpha()
-            
-            # Ajustamos la imagen al nuevo tamano del vigilante 
-            self.imagen_vigilante = pygame.transform.scale(img_cargada, (self.ancho, self.alto))
-            
-            
-            # Creamos una copia para aplicar el efecto
-            self.imagen_soleada = self.imagen_vigilante.copy()
-            # Creamos una capa de luz amarilla/dorada brillante
-            luz_solar = pygame.Surface((self.ancho, self.alto)).convert_alpha()
-            luz_solar.fill((255, 200, 50, 100)) # Amarillo dorado con transparencia
-            # Fusionamos la luz con la imagen para que se vea soleado
-            self.imagen_soleada.blit(luz_solar, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-            
-        except:
-            # Respaldo visual si no se encuentra la imagen
-            print("Aviso: No se pudo cargar vigilante.png en assets/images/")
+        self.imagenes = {}
 
-        #  CONFIGURACIÓN DEL ÁRBOL DE COMPORTAMIENTO
+        try:
+            hoja = pygame.image.load(ruta_imagen).convert_alpha()
+            f = 256
+            self.imagenes["abajo"] = pygame.transform.smoothscale(hoja.subsurface((0, 0, f, f)), (50, 50))
+            self.imagenes["izquierda"] = pygame.transform.smoothscale(hoja.subsurface((0, f, f, f)), (50, 50))
+            self.imagenes["derecha"] = pygame.transform.smoothscale(hoja.subsurface((0, f*2, f, f)), (50, 50))
+            self.imagenes["arriba"] = pygame.transform.smoothscale(hoja.subsurface((0, f*3, f, f)), (50, 50))
+        except:
+            self.imagenes = None
+
+        # ARBOL DE COMPORTAMIENTO
         self.objetivo = None
         self.mapa_actual = None
-        
         self.comportamiento = Selector()
-        secuenciaAtaque = Secuencia()
-        secuenciaReposo = Secuencia()
+        
+        self.secuenciaAtaque = Secuencia()
+        self.secuenciaAtaque.agregar_hijo(Accion(self.objetivo_detectado))
+        self.secuenciaAtaque.agregar_hijo(Accion(self.atacar))
 
-        self.comportamiento.agregar_hijo(secuenciaAtaque)
-        self.comportamiento.agregar_hijo(secuenciaReposo)
+        self.comportamiento.agregar_hijo(self.secuenciaAtaque)
+        self.comportamiento.agregar_hijo(Accion(self.Reposo))
 
-        hay_objetivo = Accion(lambda: self.objetivo is not None)
+        # OPTIMIZACIÓN de A*
+        self.camino_actual = []
+        self.ultima_meta = None
 
-        # Rama de Reposo: Si no hay objetivo, esperar/patrullar
-        secuenciaReposo.agregar_hijo(Invertir(hay_objetivo))
-        secuenciaReposo.agregar_hijo(Accion(self.Reposo))
 
-        # Rama de Ataque: Si hay objetivo, atacar (A*)
-        secuenciaAtaque.agregar_hijo(Accion(self.objetivo_cerca))
-        secuenciaAtaque.agregar_hijo(Accion(self.atacar))
-
-        # Timer para desactivar el objetivo (cada 180 frames intenta desactivarlo)
-        tiempoAtacando = Timer(180)
-        tiempoAtacando.agregar_hijo(Accion(self.Desactivar_objetivo))
-        secuenciaAtaque.agregar_hijo(tiempoAtacando)
-
-    # Métodos del Árbol de Comportamiento
-    def Desactivar_objetivo(self):
-        self.objetivo = None
-        return True
-
-    def objetivo_cerca(self):
-        # Si tenemos un objetivo asignado, consideramos que está "cerca" para activar la secuencia
+    def objetivo_detectado(self):
         return self.objetivo is not None
 
+
     def atacar(self):
-        # Aquí va tu lógica de A* original
-        if self.objetivo and self.mapa_actual:
-            grid_x_vig = (self.rect.x - self.mapa_actual.rect.x) // self.mapa_actual.tile_size
-            grid_y_vig = (self.rect.y - self.mapa_actual.rect.y) // self.mapa_actual.tile_size
-            grid_x_jug = (self.objetivo.rect.x - self.mapa_actual.rect.x) // self.mapa_actual.tile_size
-            grid_y_jug = (self.objetivo.rect.y - self.mapa_actual.rect.y) // self.mapa_actual.tile_size
-            
 
-            inicio = EstadoMapa(grid_x_vig, grid_y_vig, self.mapa_actual.grid)
-            objetivo_a_estrella = EstadoMapa(grid_x_jug, grid_y_jug, self.mapa_actual.grid)
+        if not self.objetivo or not self.mapa_actual:
+            return False
 
-            resultado = Astar(inicio, objetivo_a_estrella)
-            camino = resultado[0] if isinstance(resultado, tuple) else resultado
+        vx = (self.rect.centerx - self.mapa_actual.rect.x) // self.mapa_actual.tile_size
+        vy = (self.rect.centery - self.mapa_actual.rect.y) // self.mapa_actual.tile_size
 
-            if camino and len(camino) > 1:
-                proximo_paso = camino[1]
-                # Ajuste de destino para el nuevo tamaño grande centrado
-                destino_x = self.mapa_actual.rect.x + (proximo_paso.x * self.mapa_actual.tile_size) + (self.mapa_actual.tile_size // 2 - self.ancho // 2)
-                destino_y = self.mapa_actual.rect.y + (proximo_paso.y * self.mapa_actual.tile_size) + (self.mapa_actual.tile_size // 2 - self.alto // 2)
+        jx = (self.objetivo.rect.centerx - self.mapa_actual.rect.x) // self.mapa_actual.tile_size
+        jy = (self.objetivo.rect.centery - self.mapa_actual.rect.y) // self.mapa_actual.tile_size
 
-                if self.rect.x < destino_x: self.rect.x += self.velocidad
-                elif self.rect.x > destino_x: self.rect.x -= self.velocidad
-                if self.rect.y < destino_y: self.rect.y += self.velocidad
-                elif self.rect.y > destino_y: self.rect.y -= self.velocidad
-        return True
+        vx = max(0, min(int(vx), len(self.mapa_actual.grid[0]) - 1))
+        vy = max(0, min(int(vy), len(self.mapa_actual.grid) - 1))
+        jx = max(0, min(int(jx), len(self.mapa_actual.grid[0]) - 1))
+        jy = max(0, min(int(jy), len(self.mapa_actual.grid) - 1))
+
+        inicio = EstadoMapa(vx, vy, self.mapa_actual.grid)
+        meta = EstadoMapa(jx, jy, self.mapa_actual.grid)
+
+        #Recalcular camino si cambia meta O si ya no hay camino
+        if self.ultima_meta != (jx, jy) or not self.camino_actual:
+            self.camino_actual, _, _ = Astar(inicio, meta)
+            self.ultima_meta = (jx, jy)
+
+        camino = self.camino_actual
+
+        if camino and len(camino) > 1:
+
+            proximo = camino[1]
+
+            dest_x = self.mapa_actual.rect.x + (proximo.x * self.mapa_actual.tile_size) + (self.mapa_actual.tile_size // 2)
+            dest_y = self.mapa_actual.rect.y + (proximo.y * self.mapa_actual.tile_size) + (self.mapa_actual.tile_size // 2)
+
+            dx = dest_x - self.rect.centerx
+            dy = dest_y - self.rect.centery
+
+            distancia = math.hypot(dx, dy)
+
+            #si estamos muy cerca del sigiente punto del camino, pasamos al siguiente para evitar que se trabe en la pared 
+            if distancia < 5:
+                self.camino_actual.pop(0)
+                return True
+
+            # Dirección visual
+            if abs(dx) > abs(dy):
+                self.direccion = "derecha" if dx > 0 else "izquierda"
+            else:
+                self.direccion = "abajo" if dy > 0 else "arriba"
+
+            # Movimiento normalizado, evita que se trabe enfrente de las paredes 
+            if distancia != 0:
+                self.rect.centerx += (dx / distancia) * self.velocidad
+                self.rect.centery += (dy / distancia) * self.velocidad
+
+            return True
+
+        else:
+            #Movimiento directo mejorado cuando está MUY CERCA
+            dx = self.objetivo.rect.centerx - self.rect.centerx
+            dy = self.objetivo.rect.centery - self.rect.centery
+
+            distancia = math.hypot(dx, dy)
+
+            if distancia > 3:
+                self.rect.centerx += (dx / distancia) * self.velocidad
+                self.rect.centery += (dy / distancia) * self.velocidad
+
+            return True
+
 
     def Reposo(self):
-        # Tu lógica original de movimiento simple cuando no hay persecución
-        self.rect.y += self.velocidad
-        # Reaparecer si sale de pantalla (tu lógica original)
-        if self.rect.top > pygame.display.get_surface().get_height():
-            self.rect.y = -50
-            self.rect.x = random.randint(0, pygame.display.get_surface().get_width() - self.ancho)
+
+        self.rect.y += 1
+        self.direccion = "abajo"
+
+        if self.rect.top > 800:
+            self.rect.bottom = 0
+
         return True
 
-    #Este metodo controla el movimiento automatico del vigilante, este se movera solo
+
     def mover(self, jugador, mapa):
+
         self.mapa_actual = mapa
-        
-        # Lógica de detección: si el jugador está cerca, se vuelve el objetivo
-        distancia = math.hypot(jugador.rect.centerx - self.rect.centerx, jugador.rect.centery - self.rect.centery)
-        if distancia < 300: # Rango de visión de 300 píxeles
+
+        dist = math.hypot(
+            jugador.rect.centerx - self.rect.centerx,
+            jugador.rect.centery - self.rect.centery
+        )
+
+        #DETECCIÓN MÁS LEJOS, antes 600 
+        if dist < 800:
             self.objetivo = jugador
-        
-        # Ejecutar el árbol de comportamiento
+        else:
+            self.objetivo = None
+            self.camino_actual = []
+            self.ultima_meta = None
+
         self.comportamiento.ejecutar()
 
-    #Este metodo es el que dibuja al vigilante en pantalla
+
     def dibujar(self, superficie):
-        #ARREGLO EFECTO DOBLE: Usamos la imagen ya escalada
-        #ARREGLO EFECTO SOL: Usamos la versión con filtro soleado
-        if self.imagen_soleada:
-            superficie.blit(self.imagen_soleada, self.rect)
-        elif self.imagen_vigilante:
-            # Respaldo si falla el efecto de sol pero hay imagen
-            superficie.blit(self.imagen_vigilante, self.rect)
+
+        if self.imagenes and self.direccion in self.imagenes:
+            img_rect = self.imagenes[self.direccion].get_rect(center=self.rect.center)
+            superficie.blit(self.imagenes[self.direccion], img_rect)
         else:
-            # Respaldo: Rectangulo azul original si no hay imagen
             pygame.draw.rect(superficie, self.color, self.rect)
