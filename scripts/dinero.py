@@ -11,16 +11,16 @@ class Dinero:# cree la clase dinero que representa el dinero que el jugador debe
         self.ancho = 30
         self.alto = 30
 
-        # CARGA DE LA IMAGEN dinero.png 
-        # Buscamos la ruta de la carpeta assets/images/
+        # CARGUE DE LA IMAGEN dinero.png 
+        # Busque la ruta de la carpeta assets/images/
         ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         ruta_imagen = os.path.join(ruta_base, "assets", "images", "dinero.png")
         
         self.imagen_dinero = None
         try:
-            # Cargamos la imagen con soporte para transparencia
+            # Cargue la imagen con soporte para transparencia
             img_cargada = pygame.image.load(ruta_imagen).convert_alpha()
-            # La escalamos al tamaño exacto que definiste (30x30)
+            # La escale al tamaño exacto que se define(30x30)
             self.imagen_dinero = pygame.transform.scale(img_cargada, (self.ancho, self.alto))
         except:
             # Si no se encuentra la imagen, el juego usara el rectangulo verde como respaldo
@@ -28,7 +28,7 @@ class Dinero:# cree la clase dinero que representa el dinero que el jugador debe
 
         # Posición aleatoria dentro de la pantalla
         # He corregido esto para que se inicialice correctamente dentro del rango
-        # Ahora usa el rect del mapa para aparecer dentro del banco
+        # Ahora uso el rect del mapa para aparecer dentro del banco
         
         #Lógica para aparecer SOLO en pasillos (0) 
         pasillos = []
