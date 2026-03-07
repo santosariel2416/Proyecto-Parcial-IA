@@ -10,7 +10,7 @@ class Jugador:
         # En lugar de usar solo x e y, ahora usare un rectángulo
         # porque nos permitirá detectar colisiones más adelante
         
-        # He ajustado el ancho y alto a 50 para que el jugador se vea mejor
+        # ajuste el ancho y alto a 50 para que el jugador se vea mejor
         # y aproveche el espacio de los pasillos que ahora son de 64
         self.ancho = 50
         self.alto = 50
@@ -35,10 +35,10 @@ class Jugador:
         ruta_imagen = os.path.join(ruta_base, "assets", "images", "imagen_jugador.png")
         
         try:
-            # Cargamos con convert_alpha para respetar la transparencia original
+            # Cargue con convert_alpha para respetar la transparencia original
             full_sheet = pygame.image.load(ruta_imagen).convert_alpha()
             
-            # Tu imagen tiene 8 columnas. Calculamos el tamaño real de cada cuadro original
+            # la imagen tiene 8 columnas. Calculamos el tamaño real de cada cuadro original
             self.frame_width = full_sheet.get_width() // 8
             self.frame_height = full_sheet.get_height() // 4
             self.spritesheet = full_sheet
@@ -48,27 +48,27 @@ class Jugador:
             self.frame_width = 50
             self.frame_height = 50
 
-        # Función mejorada para eliminar el rastro de sombra
+        # Esta es la Función mejorada para eliminar el rastro de sombra
         def get_frame(sheet, col, row):
-            # 1. Creamos el área de recorte
+            # 1. Cree el área de recorte
             area = (col * self.frame_width, row * self.frame_height, self.frame_width, self.frame_height)
             
-            # 2. Creamos una superficie nueva con soporte de transparencia total
+            # 2. Cree una superficie nueva con soporte de transparencia total
             cuadro_final = pygame.Surface((self.ancho, self.alto), pygame.SRCALPHA)
             
-            # 3. Recortamos el muñequito del original
+            # 3. Recorte el muñequito del original
             temp_sub = sheet.subsurface(area)
             
             # 4. Lo escalamos usando 'scale' en lugar de 'smoothscale' 
             # Esto evita que Pygame invente píxeles borrosos en los bordes (la sombra)
             personaje_escalado = pygame.transform.scale(temp_sub, (self.ancho, self.alto))
             
-            # 5. Pegamos el personaje limpio en nuestra superficie final
+            # 5. Pegue el personaje limpio en la nuestra superficie final
             cuadro_final.blit(personaje_escalado, (0, 0))
             
             return cuadro_final
 
-        # Organizamos las animaciones (Fila 0 y 2 según tu imagen de 8 columnas)
+        # Organize  las animaciones (Fila 0 y 2 según la imagen de 8 columnas)
         self.animaciones = {
             "derecha": [get_frame(self.spritesheet, i, 0) for i in range(4)],
             "izquierda": [get_frame(self.spritesheet, i+4, 0) for i in range(4)],
