@@ -1,17 +1,21 @@
+#Jesus Ariel Santos
+#24-EISN-2-034
+
+#Este spript define la estructura del arbol de comportamiento, con sus nodos y acciones, es la base de la IA de los vigilantes
 class Nodo:
-    def __init__(self):
+    def __init__(self):#El nodo base, del cual heredan los demas nodos, tiene una lista de hijos vacia
         self.hijos = []
 
-    def agregar_hijo(self, hijo):
+    def agregar_hijo(self, hijo):#Agrega un hijo al nodo, es decir, agrega un nodo a la lista de hijos del nodo acual
         self.hijos.append(hijo)
 
-    def ejecutar(self):
+    def ejecutar(self):#El metodo ejecutar es el que se llama para ejecutar el arbol de comportamiento
         raise NotImplementedError("Este método debe ser implementado por las subclases")
 
 
 #Aqui se define el arbol de comportamiento, con sus nodos y acciones. es la base de la IA de los vigilantes 
 
-class Selector(Nodo):
+class Selector(Nodo):#el nodo selector ejecuta a sus hijos en orden y devuelve true si alguno de los hijos devuelve true, sino devuelve false
     def ejecutar(self):
         for hijo in self.hijos:
             if hijo.ejecutar():
@@ -21,7 +25,7 @@ class Selector(Nodo):
 
 # El nodo de secuencia ejecuta a sus hijos en orden y solo devuelve True si los hojos devuelven True
 
-class Secuencia(Nodo):
+class Secuencia(Nodo):#
     def ejecutar(self):
         for hijo in self.hijos:
             if not hijo.ejecutar():
