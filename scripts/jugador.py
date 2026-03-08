@@ -15,8 +15,11 @@ class Jugador:
         self.ancho = 50
         self.alto = 50
         
-        # Creo el rectángulo del jugador con posición y tamaño
-        self.rect = pygame.Rect(posicion_x, posicion_y, self.ancho, self.alto)
+        #  CAMBIO PARA COLISIONES 
+        # He reducido ligeramente el tamaño del rect de colisión (30x30) 
+        # para que el personaje no se trabe en los pasillos estrechos,
+        # pero mantenemos el tamaño visual de 50x50 para el dibujo.
+        self.rect = pygame.Rect(posicion_x, posicion_y, 30, 30)
         
         # Velocidad con la que se mueve
         self.velocidad = 5
@@ -82,10 +85,14 @@ class Jugador:
         self.imagen_actual = self.animaciones[self.animacion_actual][0]
         self.caminando = False
 
-    def mover(self, teclas_presionadas):# Este metodo se encarga de mover al jugador segun las teclas que se presionen, recibe un diccionario con las teclas presionadas
+    def mover(self, teclas_presionadas, mapa=None):# Este metodo se encarga de mover al jugador segun las teclas que se presionen, recibe un diccionario con las teclas presionadas
         self.caminando = False
 
-        # Movimiento horizontal
+        # Guardamos la posición actual por si chocamos
+        pos_x_antes = self.rect.x
+        pos_y_antes = self.rect.y
+
+        #  MOVIMIENTO HORIZONTAL SEPARADO 
         if teclas_presionadas[pygame.K_LEFT]:
             self.rect.x -= self.velocidad
             self.direccion = (-1, 0)
@@ -97,7 +104,11 @@ class Jugador:
             self.animacion_actual = "derecha"
             self.caminando = True
 
-        # Movimiento vertical
+        # Si al movernos en X chocamos con una pared del mapa, volvemos atrás solo en X
+        if mapa and mapa.colisiona_pared(self.rect):
+            self.rect.x = pos_x_antes
+
+        #  MOVIMIENTO VERTICAL SEPARADO 
         if teclas_presionadas[pygame.K_UP]:
             self.rect.y -= self.velocidad
             self.direccion = (0, -1)
@@ -108,6 +119,10 @@ class Jugador:
             self.direccion = (0, 1)
             self.animacion_actual = "abajo"
             self.caminando = True
+
+        # Si al movernos en Y chocamos con una pared del mapa, volvemos atrás solo en Y
+        if mapa and mapa.colisiona_pared(self.rect):
+            self.rect.y = pos_y_antes
 
         # Control de la animación
         if self.caminando:
@@ -128,7 +143,8 @@ class Jugador:
 
     def dibujar(self, superficie):
         # Dibujamos la imagen del personaje (el spray)
-        superficie.blit(self.imagen_actual, self.rect)
+        # Ajustamos el dibujo para que se centre en el rect de colisión
+        superficie.blit(self.imagen_actual, (self.rect.x - 10, self.rect.y - 10))
 
     def recibir_danio(self): 
         #Esto reduce una vida cuando el jugador es golpeado

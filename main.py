@@ -29,6 +29,13 @@ def menu_principal():
 
     pygame.init() #inicie todos los modulos de pygame correctamente sin esto no funciona nada 
     pygame.mixer.init() # Inicializamos el audio para la musica de inicio
+    
+    #INICIALIZAR CONTROL de videojuego 
+    pygame.joystick.init()
+    control = None
+    if pygame.joystick.get_count() > 0:
+        control = pygame.joystick.Joystick(0)
+        control.init()
 
     info = pygame.display.Info()# utilice pygame.display.Info() para obtener el tamaño real de la pantalla
     Ancho = info.current_w
@@ -43,7 +50,7 @@ def menu_principal():
     try:
         pygame.mixer.music.load(ruta_inicio)
         pygame.mixer.music.play(-1) # Suena en bucle en el menu
-        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.set_volume(1.0) 
     except:
         print("Aviso: No se pudo cargar musica inicio.mp3")
 
@@ -134,6 +141,13 @@ def menu_principal():
                 if evento.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
+            
+            # DETECCION DE BOTON START O X EN EL CONTROL PARA EMPEZAR 
+            if evento.type == pygame.JOYBUTTONDOWN:
+                if evento.button in [0, 9]: # 0 es X, 9 suele ser Start
+                    pygame.mixer.music.stop()
+                    en_menu = False
+                    iniciar_juego()
 
         pygame.display.flip()
         reloj.tick(60) #Este es l contador de el reloj que controla la velocidad del menu,
@@ -147,6 +161,13 @@ def iniciar_juego():
     info = pygame.display.Info()
     Ancho = info.current_w
     Alto = info.current_h
+
+    # Re-detectar control en el juego
+    pygame.joystick.init()
+    control = None
+    if pygame.joystick.get_count() > 0:
+        control = pygame.joystick.Joystick(0)
+        control.init()
 
     # Cree la pantalla en modo RESIZABLE que permite que pueda cambiar el tamaño de la pantalla como minimizar, maximizar y cerrar  
     pantalla = pygame.display.set_mode((Ancho, Alto), pygame.RESIZABLE)
@@ -163,7 +184,7 @@ def iniciar_juego():
 
     # Correccion tecnica de ruta para la carpeta sonidos y assets
     ruta_script = os.path.dirname(os.path.abspath(__file__))
-    dir_sonidos = os.path.join(ruta_script, "sonidos")
+    dir_sonidos = os.path.join(ruta_script, "assets", "sonidos") # Ruta corregida a assets/sonidos
     ruta_fondo = os.path.join(ruta_script, "assets", "images", "fondo.png")
     
     # Rutas para las musicas del juego 
@@ -187,12 +208,18 @@ def iniciar_juego():
         fondo_juego = pygame.Surface((Ancho, Alto))
         fondo_juego.fill((60, 0, 0))
 
-    try: # aqui se cargan los sonidos del juego que se encuentran en la carpeta sonido 
-        sonido_disparo = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_dinero.wav"))
-        sonido_moneda = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_moneda.wav"))
+    # CARGA DE SONIDOS INDIVIDUAL PARA EVITAR FALLOS
+    try:
+        sonido_disparo = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_disparar.wav"))
+    except: print("No se encontró sonido_disparar.wav")
+
+    try:
+        sonido_moneda = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_dinero.wav"))
+    except: print("No se encontró sonido_dinero.wav")
+
+    try:
         sonido_muerte = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_muerte.wav"))
-    except:
-        pass
+    except: print("No se encontró sonido_muerte.wav")
 
     #Esto permite colocar el nombre del juego arriba en la ventana 
     pygame.display.set_caption("Mision Roja")
@@ -240,7 +267,7 @@ def iniciar_juego():
 
     balas = []
 
-        # configuracion del efecto de lluvia de sangre para la pantalla de game over 
+    # configuracion del efecto de lluvia de sangre para la pantalla de game over 
     gotas_sangre_go = [[random.randint(0, Ancho), random.randint(-Alto, 0), random.randint(4, 10), random.randint(3, 7)] for _ in range(150)]
     alpha_perdiste = 0
     subiendo_perdiste = True
@@ -271,6 +298,55 @@ def iniciar_juego():
 
             if evento.type == pygame.QUIT:#si la ventana del juego es cerrada por el usuario se cierra completamente el programa
                 corriendo = False
+
+            # DETECCION DE DISPARO CON L1 (Botón 4) o R1 (Botón 5)
+            if evento.type == pygame.JOYBUTTONDOWN:
+                if (evento.button == 4 or evento.button == 5) and not game_over and not victoria:
+                    if sonido_disparo:
+                        sonido_disparo.play()
+                    nueva_bala = Bala(
+                        jugador_principal.rect.centerx - 4,
+                        jugador_principal.rect.centery - 4,
+                        jugador_principal.direccion
+                    )
+                    balas.append(nueva_bala)
+                
+                # REINICIAR CON X (Botón 0)
+                if evento.button == 0 and (game_over or victoria):
+                    # Lógica de reinicio (copiada de la tecla R)
+                    musica_perdiste_activa = False
+                    musica_victoria_activa = False
+                    try:
+                        pygame.mixer.music.load(ruta_musica_fondo)
+                        pygame.mixer.music.play(-1)
+                    except: pass
+                    jugador_principal.vidas = 3
+                    jugador_principal.rect.x = mapa.rect.left - 100 
+                    jugador_principal.rect.y = mapa.rect.centery
+                    vigilantes.clear()
+                    vigilantes_muertos.clear()
+                    balas.clear()
+                    for i in range(3):
+                        intentos = 0
+                        while intentos < 100:
+                            x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
+                            y = random.randint(mapa.rect.top + 50, mapa.rect.bottom - 50)
+                            enemigo = Vigilante(x, y)
+                            if not mapa.colisiona_pared(enemigo.rect):
+                                vigilantes.append(enemigo)
+                                break
+                            intentos += 1
+                    score = 0 
+                    game_over = False
+                    victoria = False
+                    dinero_recolectado = 0
+                    dinero_objetivo.reaparecer(mapa)
+
+                # VOLVER AL INICIO CON TRIÁNGULO (Botón 3)
+                if evento.button == 3 and (game_over or victoria):
+                    pygame.mixer.music.stop()
+                    corriendo = False 
+                    menu_principal()
 
             if evento.type == pygame.KEYDOWN:# si el usuario presiona una tecla se verifica cual es la tecla presionada para tomar la accion correspondiente 
 
@@ -360,13 +436,32 @@ def iniciar_juego():
         if not game_over and not victoria: # si el juego no ha terminado se ejecuta la logica del juego, si el juego ha terminado se detiene toda la logica y solo se muestra el mensaje de victoria o game over y la opcion de reiniciar el juego 
 
             teclas = pygame.key.get_pressed()
+            
+            #LOGICA DE MOVIMIENTO PARA CONTROL (Stick y Cruceta)
+            # Se crea un diccionario similar a 'teclas' para que el metodo .mover del jugador lo entienda
+            teclas_control = {
+                pygame.K_LEFT: teclas[pygame.K_LEFT],
+                pygame.K_RIGHT: teclas[pygame.K_RIGHT],
+                pygame.K_UP: teclas[pygame.K_UP],
+                pygame.K_DOWN: teclas[pygame.K_DOWN]
+            }
+
+            if control:
+                # Ejes del stick izquierdo (Eje 0 horizontal, Eje 1 vertical)
+                eje_x = control.get_axis(0)
+                eje_y = control.get_axis(1)
+                # Cruceta (Hat)
+                hat = control.get_hat(0)
+
+                if eje_x < -0.5 or hat[0] == -1: teclas_control[pygame.K_LEFT] = True
+                if eje_x > 0.5 or hat[0] == 1: teclas_control[pygame.K_RIGHT] = True
+                if eje_y < -0.5 or hat[1] == 1: teclas_control[pygame.K_UP] = True
+                if eje_y > 0.5 or hat[1] == -1: teclas_control[pygame.K_DOWN] = True
 
             rect_original = jugador_principal.rect.copy()
 
-            jugador_principal.mover(teclas)
-
-            if mapa.colisiona_pared(jugador_principal.rect):#si el jugador colisiona con una pared del mapa, se devuelve a su posicion original antes de moverse para que no pueda atravesar las paredes
-                jugador_principal.rect = rect_original
+            # Se le pasa el mapa y el estado de las teclas (combinado con control)
+            jugador_principal.mover(teclas_control, mapa)
 
             if jugador_principal.rect.left < 0:
                 jugador_principal.rect.left = 0
@@ -405,8 +500,6 @@ def iniciar_juego():
                 posicion_original = vigilante.rect.copy()
 
                 vigilante.mover(jugador_principal, mapa)
-                if mapa.colisiona_pared(vigilante.rect):
-                    vigilante.rect = posicion_original
 
             for bala in balas:#aqui se mueve cada bala usando su metodo mover y ahora le paso el mapa para detectar las paredes
                 bala.mover(mapa)
@@ -523,13 +616,13 @@ def iniciar_juego():
                 #BOTONES DE VICTORIA
                 col_r = (200, 0, 0) if rect_reintentar.collidepoint(pos_mouse) else (138, 0, 0)
                 pygame.draw.rect(pantalla, col_r, rect_reintentar, border_radius=10)
-                txt_r = f_btn.render("REINTENTAR JUEGO", True, (255, 255, 255))
+                txt_r = f_btn.render("X PARA REINTENTAR", True, (255, 255, 255)) # Texto cambiado para control
                 txt_r.set_alpha(alpha_victoria)
                 pantalla.blit(txt_r, (Ancho//2 - 165, Alto//2 + 58))
 
                 col_v = (200, 0, 0) if rect_volver_inicio.collidepoint(pos_mouse) else (138, 0, 0)
                 pygame.draw.rect(pantalla, col_v, rect_volver_inicio, border_radius=10)
-                txt_v = f_btn.render("VOLVER AL INICIO", True, (255, 255, 255))
+                txt_v = f_btn.render("TRIANGULO INICIO", True, (255, 255, 255)) # Texto cambiado para control
                 txt_v.set_alpha(alpha_victoria)
                 pantalla.blit(txt_v, (Ancho//2 - 150, Alto//2 + 148))
 
@@ -553,13 +646,13 @@ def iniciar_juego():
                 #BOTONES DE DERROTA 
                 col_r = (200, 0, 0) if rect_reintentar.collidepoint(pos_mouse) else (138, 0, 0)
                 pygame.draw.rect(pantalla, col_r, rect_reintentar, border_radius=10)
-                txt_r = f_btn.render("REINTENTAR JUEGO", True, (255, 255, 255))
+                txt_r = f_btn.render("X PARA REINTENTAR", True, (255, 255, 255))
                 txt_r.set_alpha(alpha_perdiste)
                 pantalla.blit(txt_r, (Ancho//2 - 165, Alto//2 + 58))
 
                 col_v = (200, 0, 0) if rect_volver_inicio.collidepoint(pos_mouse) else (138, 0, 0)
                 pygame.draw.rect(pantalla, col_v, rect_volver_inicio, border_radius=10)
-                txt_v = f_btn.render("VOLVER AL INICIO", True, (255, 255, 255))
+                txt_v = f_btn.render("TRIANGULO INICIO", True, (255, 255, 255))
                 txt_v.set_alpha(alpha_perdiste)
                 pantalla.blit(txt_v, (Ancho//2 - 150, Alto//2 + 148))
 

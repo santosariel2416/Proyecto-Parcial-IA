@@ -1,2 +1,5 @@
-pygame 
-random
+import pygame   # Gráficos, sonido y control
+import sys      # Cierre del sistema
+import random   # Aleatoriedad
+import os       # Rutas de carpetas y archivos
+import math     # para calcular 
