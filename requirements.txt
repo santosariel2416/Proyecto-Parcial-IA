@@ -1,3 +1,6 @@
+#Jesus Ariel Santos
+#24-EISN-2-034 
+
 import pygame   # Gráficos, sonido y control
 import sys      # Cierre del sistema
 import random   # Aleatoriedad
