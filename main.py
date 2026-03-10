@@ -242,7 +242,7 @@ def iniciar_juego():
     # Lista que almacenará los tiempos en que cada vigilante debe reaparecer
     vigilantes_muertos = []
 
-    for i in range(3):#Esto es para que el ciclo se ejecute 3 veces
+    for i in range(7): # Esto es para que el ciclo se ejecute (7) veces 
         intentos = 0 # Variable de seguridad para no quedar atrapado en el bucle
         while intentos < 100:
             x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
@@ -326,7 +326,7 @@ def iniciar_juego():
                     vigilantes.clear()
                     vigilantes_muertos.clear()
                     balas.clear()
-                    for i in range(3):
+                    for i in range(7):
                         intentos = 0
                         while intentos < 100:
                             x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
@@ -380,7 +380,7 @@ def iniciar_juego():
                     vigilantes.clear()
                     vigilantes_muertos.clear()
                     balas.clear()
-                    for i in range(3):
+                    for i in range(7):
                         intentos = 0
                         while intentos < 100:
                             x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
@@ -412,7 +412,7 @@ def iniciar_juego():
                         vigilantes.clear()
                         vigilantes_muertos.clear()
                         balas.clear()
-                        for i in range(3):
+                        for i in range(7): 
                             intentos = 0
                             while intentos < 100:
                                 x = random.randint(mapa.rect.left + 50, mapa.rect.right - 50)
