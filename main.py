@@ -214,11 +214,11 @@ def iniciar_juego():
     except: print("No se encontró sonido_disparar.wav")
 
     try:
-        sonido_moneda = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_dinero.wav"))
+        sonido_moneda = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_dinero.mp3"))
     except: print("No se encontró sonido_dinero.wav")
 
     try:
-        sonido_muerte = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_muerte.wav"))
+        sonido_muerte = pygame.mixer.Sound(os.path.join(dir_sonidos, "sonido_muerte.mp3"))
     except: print("No se encontró sonido_muerte.wav")
 
     #Esto permite colocar el nombre del juego arriba en la ventana 
